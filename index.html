@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="vi" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Sử 12 • Thi Thử &amp; Chấm Đúng Sai (Full 177 Câu)</title>
+  <meta name="description" content="Trang web thi thử, chấm đúng sai và giải thích chi tiết môn Lịch sử 12 — đầy đủ 100% 177 câu hỏi từ đề cương kiểm tra giữa kì I." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="app" class="app-shell">
+    <!-- Global Top Navigation -->
+    <header class="topbar" id="topbar">
+      <div class="topbar-inner container">
+        <div class="brand" role="button" tabindex="0" id="brandBtn" title="Về trang chủ">
+          <div class="brand-badge">SỬ 12</div>
+          <div class="brand-text">
+            <span class="brand-title">Thi Thử &amp; Chấm Đúng Sai</span>
+            <span class="brand-sub">Full 100% đề cương Giữa kì I • 177 câu</span>
+          </div>
+        </div>
+
+        <nav class="main-nav" aria-label="Điều hướng chính" id="mainNav">
+          <button class="nav-tab active" data-view="home" type="button">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5L12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1v-9.5Z"/></svg>
+            <span>Thi thử</span>
+          </button>
+          <button class="nav-tab" data-view="practice-setup" type="button">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            <span>Ôn tập</span>
+          </button>
+          <button class="nav-tab" data-view="bank" type="button">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+            <span>Kho đề (177)</span>
+          </button>
+        </nav>
+
+        <div class="topbar-actions">
+          <button class="icon-btn" id="themeToggle" type="button" aria-label="Đổi giao diện Sáng/Tối" title="Đổi giao diện Sáng / Tối">
+            <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41m11.32-11.32 1.41-1.41"/></svg>
+            <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content Views -->
+    <main class="main-content" id="mainContent">
+      <!-- Views rendered dynamically by app.js for zero-lag transitions -->
+    </main>
+
+    <!-- Confirm Modal -->
+    <div class="modal-backdrop" id="modalBackdrop" hidden>
+      <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+        <div class="modal-header">
+          <h3 id="modalTitle">Xác nhận</h3>
+          <button class="icon-btn modal-close" id="modalCloseBtn" type="button" aria-label="Đóng">
+            <svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+        <div class="modal-body" id="modalBody"></div>
+        <div class="modal-footer" id="modalFooter"></div>
+      </div>
+    </div>
+
+    <!-- Mobile Question Palette Bottom Sheet -->
+    <div class="sheet-backdrop" id="sheetBackdrop" hidden>
+      <div class="sheet-panel" role="dialog" aria-modal="true" aria-label="Bảng câu hỏi">
+        <div class="sheet-handle"></div>
+        <div class="sheet-header">
+          <div>
+            <h3>Bảng câu hỏi</h3>
+            <p class="sheet-sub" id="sheetSub"></p>
+          </div>
+          <button class="icon-btn" id="sheetCloseBtn" type="button" aria-label="Đóng bảng câu hỏi">
+            <svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+        <div class="sheet-body" id="sheetBody"></div>
+      </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast-container" id="toastContainer" aria-live="polite"></div>
+  </div>
+
+  <!-- Question Data (100% from PDF) -->
+  <script defer src="data/bai1.js"></script>
+  <script defer src="data/bai2.js"></script>
+  <script defer src="data/bai3.js"></script>
+  <script defer src="data/bai4.js"></script>
+  <script defer src="data/bai5.js"></script>
+  <script defer src="data/index.js"></script>
+  <script defer src="app.js"></script>
+</body>
+</html>
