@@ -5,6 +5,7 @@
   'use strict';
 
   const DB = window.LS12_DB;
+  const MINDMAPS = window.LS12_MINDMAPS || [];
   const STORAGE_KEYS = {
     theme: 'ls12_theme',
     bookmarks: 'ls12_bookmarks',
@@ -26,7 +27,7 @@
 
   // App Runtime State
   const state = {
-    view: 'home', // 'home' | 'practice-setup' | 'workspace' | 'results' | 'bank'
+    view: 'home', // 'home' | 'practice-setup' | 'mindmap' | 'workspace' | 'results' | 'bank'
     builder: {
       mode: 'exam', // 'exam' | 'practice'
       selectedLessons: DB.lessons.map((l) => l.id),
@@ -35,6 +36,12 @@
       shuffleOptions: false,
       durationMin: 45,
       autoCheckPractice: true
+    },
+    mindmap: {
+      lessonId: (MINDMAPS[0] && MINDMAPS[0].id) || 'bai-1',
+      layout: typeof window !== 'undefined' && window.innerWidth && window.innerWidth < 768 ? 'vertical' : 'tree',
+      query: '',
+      collapsed: {}
     },
     bank: {
       lessonId: 'all',
@@ -736,6 +743,12 @@
             <div class="hero-tag">LỊCH SỬ 12 • CHƯƠNG TRÌNH GDPT 2018</div>
             <h1>Hệ thống Thi Thử &amp; Chấm Đúng Sai Kèm Giải Thích</h1>
             <p>Tổng hợp đầy đủ 100% <strong>${DB.counts.total} câu hỏi</strong> (${DB.counts.mc} câu Trắc nghiệm + ${DB.counts.tf} câu Đúng/Sai) từ đề cương Giữa kì I. Chấm điểm chuẩn thang Bộ GD&amp;ĐT 2025, giải thích từng ý a, b, c, d.</p>
+            <div class="hero-actions">
+              <button type="button" class="btn btn-sm hero-mindmap-btn" id="openMindmapFromHero">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><circle cx="4.5" cy="6" r="2"/><circle cx="19.5" cy="6" r="2"/><circle cx="4.5" cy="18" r="2"/><circle cx="19.5" cy="18" r="2"/><path d="M9.7 10.2L6.1 7.4M14.3 10.2l3.6-2.8M9.7 13.8l-3.6 2.8M14.3 13.8l3.6 2.8"/></svg>
+                <span>Xem Sơ đồ tư duy 5 bài (Không sót ý)</span>
+              </button>
+            </div>
           </div>
           <div class="hero-stats">
             <div class="hero-stat">
@@ -781,6 +794,11 @@
   }
 
   function bindHomeEvents() {
+    const heroMmBtn = document.getElementById('openMindmapFromHero');
+    if (heroMmBtn) {
+      heroMmBtn.addEventListener('click', () => confirmLeaveWorkspace('mindmap'));
+    }
+
     // Quick presets
     dom.mainContent.querySelectorAll('[data-preset]').forEach((btn) => {
       btn.addEventListener('click', () => {
@@ -1822,11 +1840,452 @@
   }
 
   /* ------------------------------------------------------------------------
+     View 5: Sơ đồ tư duy (Mind Map) — Full 5 Bài
+     ------------------------------------------------------------------------ */
+  function getActiveMindMap() {
+    return MINDMAPS.find((m) => m.id === state.mindmap.lessonId) || MINDMAPS[0] || null;
+  }
+
+  function countMindMapMetrics(mm) {
+    let nodes = 0;
+    let items = 0;
+    for (const b of mm.branches) {
+      nodes += b.children.length;
+      for (const c of b.children) {
+        items += c.points.length + (c.traps ? c.traps.length : 0);
+      }
+    }
+    return { branches: mm.branches.length, nodes, items };
+  }
+
+  function highlightTextHTML(rawText, query) {
+    const text = String(rawText == null ? '' : rawText).normalize('NFC');
+    const qNorm = stripVN((query || '').trim());
+    if (!qNorm) return escapeHTML(text);
+
+    let norm = '';
+    const map = [];
+    let offset = 0;
+    for (const ch of Array.from(text)) {
+      const s = stripVN(ch);
+      if (s.length === 0) {
+        if (map.length > 0) map[map.length - 1].end = offset + ch.length;
+      } else {
+        for (let k = 0; k < s.length; k++) {
+          map.push({ start: offset, end: offset + ch.length });
+        }
+        norm += s;
+      }
+      offset += ch.length;
+    }
+
+    const ranges = [];
+    let pos = 0;
+    while (pos <= norm.length - qNorm.length) {
+      const idx = norm.indexOf(qNorm, pos);
+      if (idx === -1) break;
+      const origStart = map[idx].start;
+      const origEnd = map[idx + qNorm.length - 1].end;
+      if (ranges.length && ranges[ranges.length - 1][1] >= origStart) {
+        ranges[ranges.length - 1][1] = Math.max(ranges[ranges.length - 1][1], origEnd);
+      } else {
+        ranges.push([origStart, origEnd]);
+      }
+      pos = idx + qNorm.length;
+    }
+
+    if (ranges.length === 0) return escapeHTML(text);
+    let out = '';
+    let cursor = 0;
+    for (const [start, end] of ranges) {
+      if (start > cursor) out += escapeHTML(text.slice(cursor, start));
+      out += `<mark class="mm-hit">${escapeHTML(text.slice(start, end))}</mark>`;
+      cursor = end;
+    }
+    if (cursor < text.length) out += escapeHTML(text.slice(cursor));
+    return out;
+  }
+
+  function formatMindMapPointHTML(rawText, query) {
+    const text = String(rawText || '');
+    const m = text.match(/^([^:\n]{2,46}:)\s+(.+)$/);
+    if (m) {
+      return `<span class="mm-lead">${highlightTextHTML(m[1], query)}</span> ${highlightTextHTML(m[2], query)}`;
+    }
+    return highlightTextHTML(text, query);
+  }
+
+  function filterMindMapBranches(mm, query) {
+    const qNorm = stripVN((query || '').trim());
+    if (!qNorm) return mm.branches;
+    const out = [];
+    for (const b of mm.branches) {
+      if (stripVN(b.title).includes(qNorm)) {
+        out.push(b);
+        continue;
+      }
+      const matchedChildren = b.children.filter((c) => {
+        if (stripVN(c.title).includes(qNorm)) return true;
+        if (c.points.some((p) => stripVN(p).includes(qNorm))) return true;
+        if (c.traps && c.traps.some((t) => stripVN(t).includes(qNorm))) return true;
+        return false;
+      });
+      if (matchedChildren.length > 0) {
+        out.push(Object.assign({}, b, { children: matchedChildren }));
+      }
+    }
+    return out;
+  }
+
+  function renderMindMapLeafCardHTML(child, query, branchColor) {
+    const trapsHTML =
+      child.traps && child.traps.length > 0
+        ? `
+          <div class="mm-traps-box">
+            <div class="mm-traps-title">Lưu ý bẫy đề thi</div>
+            <ul class="mm-traps-list">
+              ${child.traps.map((t) => `<li>${highlightTextHTML(t, query)}</li>`).join('')}
+            </ul>
+          </div>`
+        : '';
+
+    return `
+      <article class="mm-leaf-card" style="--branch-color:${escapeHTML(branchColor)};">
+        <h3 class="mm-leaf-title">${highlightTextHTML(child.title, query)}</h3>
+        <ul class="mm-points-list">
+          ${child.points.map((p) => `<li class="mm-point">${formatMindMapPointHTML(p, query)}</li>`).join('')}
+        </ul>
+        ${trapsHTML}
+      </article>
+    `;
+  }
+
+  function renderMindMapCanvasOnly() {
+    const mm = getActiveMindMap();
+    const statusLine = document.getElementById('mmStatusLine');
+    const canvasRegion = document.getElementById('mmCanvasRegion');
+    const clearBtn = document.getElementById('mmClearSearchBtn');
+    const treeBtn = document.getElementById('mmLayoutTreeBtn');
+    const vertBtn = document.getElementById('mmLayoutVertBtn');
+    if (!mm || !canvasRegion) return;
+
+    const query = state.mindmap.query.trim();
+    const isSearching = query.length > 0;
+    const branches = filterMindMapBranches(mm, query);
+    const totalMetrics = countMindMapMetrics(mm);
+
+    if (clearBtn) clearBtn.hidden = !isSearching;
+    if (treeBtn) treeBtn.classList.toggle('active', state.mindmap.layout === 'tree');
+    if (vertBtn) vertBtn.classList.toggle('active', state.mindmap.layout === 'vertical');
+
+    if (statusLine) {
+      const visiblePoints = branches.reduce(
+        (acc, b) => acc + b.children.reduce((ca, c) => ca + c.points.length + (c.traps ? c.traps.length : 0), 0),
+        0
+      );
+      statusLine.innerHTML = isSearching
+        ? `<span>Đang lọc theo <strong>"${escapeHTML(query)}"</strong>: thấy <strong>${branches.length}</strong>/${mm.branches.length} nhánh (${visiblePoints} ý liên quan).</span>`
+        : `<span><strong>${escapeHTML(mm.title)}</strong> • ${totalMetrics.branches} nhánh chính • ${totalMetrics.nodes} cụm kiến thức • ${totalMetrics.items} ý trọng tâm &amp; bẫy đề thi.</span><span>${state.mindmap.layout === 'tree' ? 'Mẹo: Cuộn ngang hoặc nhấn vào tên nhánh để thu gọn/mở rộng.' : 'Mẹo: Nhấn từng nhánh để mở rộng hoặc chuyển sang Sơ đồ nhánh ngang.'}</span>`;
+    }
+
+    if (branches.length === 0) {
+      canvasRegion.innerHTML = `
+        <div class="empty-state card">
+          <p style="margin:0 0 10px; font-weight:600; color:var(--text);">Không tìm thấy ý kiến thức nào khớp với "${escapeHTML(query)}" trong ${escapeHTML(mm.shortTitle)}.</p>
+          <button type="button" class="btn btn-sm btn-primary" data-mm-clear="1">Xóa từ khóa tìm kiếm</button>
+        </div>
+      `;
+      return;
+    }
+
+    const isBranchCollapsed = (branchId) => !isSearching && Boolean(state.mindmap.collapsed[branchId]);
+
+    if (state.mindmap.layout === 'tree') {
+      canvasRegion.innerHTML = `
+        <div class="mm-tree-scroll" style="--mm-accent:${escapeHTML(mm.accent)}; --mm-accent-soft:${escapeHTML(mm.accentSoft)};">
+          <div class="mm-tree">
+            <div class="mm-root-col">
+              <div class="mm-root-node">
+                <div class="mm-root-kicker">${escapeHTML(mm.shortTitle)}</div>
+                <h2 class="mm-root-title">${escapeHTML(mm.center.title)}</h2>
+                <p class="mm-root-desc">${escapeHTML(mm.center.desc)}</p>
+              </div>
+            </div>
+            <div class="mm-root-link" aria-hidden="true"></div>
+            <div class="mm-branches-col">
+              ${branches
+                .map((b) => {
+                  const collapsed = isBranchCollapsed(b.id);
+                  const branchColor = b.color || mm.accent;
+                  const leafCount = b.children.length;
+                  const childrenHTML = !collapsed
+                    ? `
+                      <div class="mm-branch-arm" aria-hidden="true"></div>
+                      <div class="mm-children-col">
+                        ${b.children
+                          .map(
+                            (child) => `
+                            <div class="mm-leaf-wrap">
+                              ${renderMindMapLeafCardHTML(child, query, branchColor)}
+                            </div>`
+                          )
+                          .join('')}
+                      </div>`
+                    : '';
+
+                  return `
+                    <div class="mm-branch-row" style="--branch-color:${escapeHTML(branchColor)};">
+                      <button type="button" class="mm-branch-node" data-mm-toggle="${b.id}" aria-expanded="${!collapsed}">
+                        <div class="mm-branch-head">
+                          <span class="mm-branch-title">${highlightTextHTML(b.title, query)}</span>
+                          <span class="mm-branch-toggle">${collapsed ? '+' : '−'}</span>
+                        </div>
+                        <div class="mm-branch-meta">${leafCount} cụm ý • ${collapsed ? 'Nhấn để mở' : 'Đang mở'}</div>
+                      </button>
+                      ${childrenHTML}
+                    </div>`;
+                })
+                .join('')}
+            </div>
+          </div>
+        </div>
+      `;
+    } else {
+      canvasRegion.innerHTML = `
+        <div class="mm-vertical" style="--mm-accent:${escapeHTML(mm.accent)}; --mm-accent-soft:${escapeHTML(mm.accentSoft)};">
+          <div class="mm-root-node">
+            <div class="mm-root-kicker">${escapeHTML(mm.shortTitle)}</div>
+            <h2 class="mm-root-title">${escapeHTML(mm.center.title)}</h2>
+            <p class="mm-root-desc">${escapeHTML(mm.center.desc)}</p>
+          </div>
+          ${branches
+            .map((b) => {
+              const collapsed = isBranchCollapsed(b.id);
+              const branchColor = b.color || mm.accent;
+              return `
+                <section class="mm-vbranch" style="--branch-color:${escapeHTML(branchColor)};">
+                  <button type="button" class="mm-vbranch-head" data-mm-toggle="${b.id}" aria-expanded="${!collapsed}">
+                    <div>
+                      <div class="mm-branch-title">${highlightTextHTML(b.title, query)}</div>
+                      <div class="mm-branch-meta">${b.children.length} cụm ý trọng tâm</div>
+                    </div>
+                    <span class="mm-branch-toggle">${collapsed ? '+' : '−'}</span>
+                  </button>
+                  ${
+                    !collapsed
+                      ? `<div class="mm-vbranch-body">
+                          ${b.children.map((child) => renderMindMapLeafCardHTML(child, query, branchColor)).join('')}
+                        </div>`
+                      : ''
+                  }
+                </section>`;
+            })
+            .join('')}
+        </div>
+      `;
+    }
+  }
+
+  function renderMindMap() {
+    const mm = getActiveMindMap();
+    if (!mm) {
+      dom.mainContent.innerHTML = '<div class="container"><div class="card">Chưa có dữ liệu sơ đồ tư duy.</div></div>';
+      return;
+    }
+
+    const tabsHTML = MINDMAPS.map((item, idx) => {
+      const metrics = countMindMapMetrics(item);
+      const isActive = item.id === mm.id;
+      const cleanName = item.shortTitle.replace(/^Bài\s+\d+:\s*/i, '');
+      return `
+        <button
+          type="button"
+          class="mm-lesson-pill ${isActive ? 'active' : ''}"
+          data-mm-lesson="${item.id}"
+          style="--mm-accent:${escapeHTML(item.accent)}; --mm-accent-soft:${escapeHTML(item.accentSoft)};"
+        >
+          <span class="mm-pill-num">Bài ${idx + 1}</span>
+          <span class="mm-pill-name">${escapeHTML(cleanName)}</span>
+          <span class="mm-pill-meta">${metrics.branches} nhánh • ${metrics.items} ý</span>
+        </button>
+      `;
+    }).join('');
+
+    dom.mainContent.innerHTML = `
+      <div class="container">
+        <div class="mm-page-header">
+          <div>
+            <h1>Sơ đồ tư duy Lịch sử 12 — Trọn bộ 5 bài</h1>
+            <p class="section-sub">${escapeHTML(mm.subtitle)} • Tổng hợp 100% ý chính, mốc thời gian, tổ chức &amp; lưu ý bẫy trắc nghiệm</p>
+          </div>
+          <div class="mm-header-actions">
+            <button type="button" class="btn btn-sm btn-soft" id="mmPracticeLessonBtn">Ôn câu hỏi ${escapeHTML(mm.shortTitle.split(':')[0])}</button>
+            <button type="button" class="btn btn-sm btn-primary" id="mmExamLessonBtn">Thi thử ${escapeHTML(mm.shortTitle.split(':')[0])}</button>
+          </div>
+        </div>
+
+        <div class="mm-lesson-tabs" role="tablist" aria-label="Chọn bài học sơ đồ tư duy">
+          ${tabsHTML}
+        </div>
+
+        <div class="mm-toolbar">
+          <div class="mm-search-wrap">
+            <input
+              type="search"
+              class="search-input"
+              id="mmSearchInput"
+              placeholder="Lọc ý, năm, từ khóa trong ${escapeHTML(mm.shortTitle.split(':')[0])} (vd: 1945, I-an-ta, ASEAN, Biển Đông)..."
+              value="${escapeHTML(state.mindmap.query)}"
+            />
+            <button type="button" class="mm-search-clear" id="mmClearSearchBtn" title="Xóa tìm kiếm" aria-label="Xóa tìm kiếm" ${state.mindmap.query.trim() ? '' : 'hidden'}>×</button>
+          </div>
+
+          <div class="mm-tool-group">
+            <div class="mm-layout-seg" role="group" aria-label="Kiểu hiển thị sơ đồ">
+              <button type="button" class="mm-layout-btn ${state.mindmap.layout === 'tree' ? 'active' : ''}" id="mmLayoutTreeBtn">Nhánh ngang</button>
+              <button type="button" class="mm-layout-btn ${state.mindmap.layout === 'vertical' ? 'active' : ''}" id="mmLayoutVertBtn">Cây dọc</button>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline" id="mmExpandAllBtn">Mở hết</button>
+            <button type="button" class="btn btn-sm btn-outline" id="mmCollapseAllBtn">Thu gọn</button>
+          </div>
+        </div>
+
+        <div class="mm-status-line" id="mmStatusLine"></div>
+        <div id="mmCanvasRegion"></div>
+      </div>
+    `;
+
+    renderMindMapCanvasOnly();
+
+    // Lesson tab switch
+    dom.mainContent.querySelectorAll('[data-mm-lesson]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        if (state.mindmap.lessonId === btn.dataset.mmLesson) return;
+        state.mindmap.lessonId = btn.dataset.mmLesson;
+        renderMindMap();
+      });
+    });
+
+    // Quick practice / exam for current mind map lesson
+    const practiceBtn = document.getElementById('mmPracticeLessonBtn');
+    if (practiceBtn) {
+      practiceBtn.addEventListener('click', () => {
+        const l = DB.lessons.find((x) => x.id === state.mindmap.lessonId);
+        if (!l) return;
+        const qs = buildQuestionsFromFilter({ lessonIds: [l.id], typeFilter: 'all', shuffleQuestions: false });
+        createSession({
+          title: `Ôn tập • ${l.shortTitle}`,
+          mode: 'practice',
+          questions: qs,
+          autoCheckPractice: true
+        });
+      });
+    }
+
+    const examBtn = document.getElementById('mmExamLessonBtn');
+    if (examBtn) {
+      examBtn.addEventListener('click', () => {
+        const l = DB.lessons.find((x) => x.id === state.mindmap.lessonId);
+        if (!l) return;
+        const qs = buildQuestionsFromFilter({ lessonIds: [l.id], typeFilter: 'all', shuffleQuestions: false });
+        createSession({
+          title: `Thi thử • ${l.shortTitle}`,
+          mode: 'exam',
+          questions: qs,
+          durationMin: 35
+        });
+      });
+    }
+
+    // Live search input (stays mounted so mobile keyboard stays open)
+    const searchInput = document.getElementById('mmSearchInput');
+    let mmSearchDebounce = null;
+    if (searchInput) {
+      searchInput.addEventListener('input', () => {
+        clearTimeout(mmSearchDebounce);
+        mmSearchDebounce = setTimeout(() => {
+          state.mindmap.query = searchInput.value;
+          renderMindMapCanvasOnly();
+        }, 120);
+      });
+    }
+
+    const clearBtn = document.getElementById('mmClearSearchBtn');
+    if (clearBtn) {
+      clearBtn.addEventListener('click', () => {
+        state.mindmap.query = '';
+        if (searchInput) {
+          searchInput.value = '';
+          searchInput.focus();
+        }
+        renderMindMapCanvasOnly();
+      });
+    }
+
+    // Layout toggles
+    const treeBtn = document.getElementById('mmLayoutTreeBtn');
+    if (treeBtn) {
+      treeBtn.addEventListener('click', () => {
+        state.mindmap.layout = 'tree';
+        renderMindMapCanvasOnly();
+      });
+    }
+    const vertBtn = document.getElementById('mmLayoutVertBtn');
+    if (vertBtn) {
+      vertBtn.addEventListener('click', () => {
+        state.mindmap.layout = 'vertical';
+        renderMindMapCanvasOnly();
+      });
+    }
+
+    // Expand / Collapse all branches in current lesson
+    const expandAllBtn = document.getElementById('mmExpandAllBtn');
+    if (expandAllBtn) {
+      expandAllBtn.addEventListener('click', () => {
+        mm.branches.forEach((b) => {
+          state.mindmap.collapsed[b.id] = false;
+        });
+        renderMindMapCanvasOnly();
+      });
+    }
+    const collapseAllBtn = document.getElementById('mmCollapseAllBtn');
+    if (collapseAllBtn) {
+      collapseAllBtn.addEventListener('click', () => {
+        mm.branches.forEach((b) => {
+          state.mindmap.collapsed[b.id] = true;
+        });
+        renderMindMapCanvasOnly();
+      });
+    }
+
+    // Delegated branch toggle & empty-clear actions inside canvas
+    const canvasRegion = document.getElementById('mmCanvasRegion');
+    if (canvasRegion) {
+      canvasRegion.addEventListener('click', (e) => {
+        const toggleBtn = e.target.closest('[data-mm-toggle]');
+        if (toggleBtn) {
+          const bid = toggleBtn.dataset.mmToggle;
+          state.mindmap.collapsed[bid] = !state.mindmap.collapsed[bid];
+          renderMindMapCanvasOnly();
+          return;
+        }
+        const clearEmpty = e.target.closest('[data-mm-clear]');
+        if (clearEmpty) {
+          state.mindmap.query = '';
+          if (searchInput) searchInput.value = '';
+          renderMindMapCanvasOnly();
+        }
+      });
+    }
+  }
+
+  /* ------------------------------------------------------------------------
      Main Render Dispatcher & Global Listeners
      ------------------------------------------------------------------------ */
   function render() {
     if (state.view === 'home') renderHome(false);
     else if (state.view === 'practice-setup') renderHome(true);
+    else if (state.view === 'mindmap') renderMindMap();
     else if (state.view === 'workspace') renderWorkspace();
     else if (state.view === 'results') renderResults();
     else if (state.view === 'bank') renderBank();

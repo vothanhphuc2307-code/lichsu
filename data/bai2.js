@@ -199,7 +199,7 @@ window.LS12_LESSONS.push({
         'chiếm thuộc địa của Tây Âu.'
       ],
       answer: 2,
-      explanation: 'Tháng 6/1947, Mỹ đề ra Kế hoạch Mác-san (Kế hoạch phục hưng châu Âu) viện trợ khoảng 17 tỷ USD nhằm giúp các nước Tây Âu khôi phục kinh tế bị tàn phá sau chiến tranh, qua đó lôi kéo các nước này vào liên minh chống Liên Xô.'
+      explanation: 'Tháng 6/1947, Mỹ đề ra Kế hoạch Mác-san (Kế hoạch phục hưng châu Âu) nhằm viện trợ kinh tế giúp các nước Tây Âu khôi phục sau chiến tranh, qua đó tập hợp các nước này vào liên minh chống Liên Xô.'
     },
     {
       id: 'b2-mc-16',

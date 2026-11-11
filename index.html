@@ -32,6 +32,10 @@
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
             <span>Ôn tập</span>
           </button>
+          <button class="nav-tab" data-view="mindmap" type="button">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><circle cx="4.5" cy="6" r="2"/><circle cx="19.5" cy="6" r="2"/><circle cx="4.5" cy="18" r="2"/><circle cx="19.5" cy="18" r="2"/><path d="M9.7 10.2L6.1 7.4M14.3 10.2l3.6-2.8M9.7 13.8l-3.6 2.8M14.3 13.8l3.6 2.8"/></svg>
+            <span>Sơ đồ tư duy</span>
+          </button>
           <button class="nav-tab" data-view="bank" type="button">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
             <span>Kho đề (177)</span>
@@ -87,13 +91,14 @@
     <div class="toast-container" id="toastContainer" aria-live="polite"></div>
   </div>
 
-  <!-- Question Data (100% from PDF) -->
+  <!-- Question & Mind Map Data (100% from PDF) -->
   <script defer src="data/bai1.js"></script>
   <script defer src="data/bai2.js"></script>
   <script defer src="data/bai3.js"></script>
   <script defer src="data/bai4.js"></script>
   <script defer src="data/bai5.js"></script>
   <script defer src="data/index.js"></script>
+  <script defer src="data/mindmap.js"></script>
   <script defer src="app.js"></script>
 </body>
 </html>
