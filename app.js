@@ -1,2049 +1,1291 @@
 /* ==========================================================================
-   Sử 12 • Thi Thử & Chấm Đúng Sai — Application Logic
+   Sử 12 (KNTT) — Bài 6: Cách Mạng Tháng Tám 1945 — Interactive Study App
+   Zero external dependencies • Works 100% offline via file:///
    ========================================================================== */
 (function () {
   'use strict';
 
-  const DB = window.LS12_DB;
-  const MINDMAPS = window.LS12_MINDMAPS || [];
-  const STORAGE_KEYS = {
-    theme: 'ls12_theme',
-    bookmarks: 'ls12_bookmarks',
-    wrongIds: 'ls12_wrong_ids',
-    history: 'ls12_history'
-  };
+  const DB = window.SU12_B6;
+  if (!DB) {
+    document.getElementById('mainContent').innerHTML =
+      '<div class="container"><div class="card" style="padding:24px;">Không tải được dữ liệu <code>data.js</code>. Vui lòng kiểm tra lại thư mục.</div></div>';
+    return;
+  }
 
   const LETTERS = ['A', 'B', 'C', 'D'];
-  const PAGE_SIZE_QUIZ = 10;
-  const PAGE_SIZE_BANK = 15;
+  const STORAGE_KEY = 'su12_bai6_kntt_v1';
+  const CAT_MAP = Object.fromEntries(DB.categories.map((c) => [c.id, c]));
+  const MC_MAP = Object.fromEntries(DB.mc.map((q) => [q.id, q]));
+  const TF_MAP = Object.fromEntries(DB.tf.map((t) => [t.id, t]));
 
+  // Normalized combined bank (52 MC + 8 TF = 60 items)
+  const ALL_ITEMS = [
+    ...DB.mc.map((q, i) => ({ ...q, kind: 'mc', bankNum: i + 1 })),
+    ...DB.tf.map((t, i) => ({ ...t, kind: 'tf', bankNum: i + 1 })),
+  ];
+
+  // =========================================================================
   // Persistent User State
-  const store = {
-    theme: loadJSON(STORAGE_KEYS.theme, 'light'),
-    bookmarks: new Set(loadJSON(STORAGE_KEYS.bookmarks, [])),
-    wrongIds: new Set(loadJSON(STORAGE_KEYS.wrongIds, [])),
-    history: loadJSON(STORAGE_KEYS.history, [])
-  };
-
-  // App Runtime State
-  const state = {
-    view: 'home', // 'home' | 'practice-setup' | 'mindmap' | 'workspace' | 'results' | 'bank'
-    builder: {
-      mode: 'exam', // 'exam' | 'practice'
-      selectedLessons: DB.lessons.map((l) => l.id),
-      typeFilter: 'all', // 'all' | 'mc' | 'tf'
-      shuffleQuestions: false,
-      shuffleOptions: false,
-      durationMin: 45,
-      autoCheckPractice: true
-    },
-    mindmap: {
-      lessonId: (MINDMAPS[0] && MINDMAPS[0].id) || 'bai-1',
-      layout: typeof window !== 'undefined' && window.innerWidth && window.innerWidth < 768 ? 'vertical' : 'tree',
-      query: '',
-      collapsed: {}
-    },
-    bank: {
-      lessonId: 'all',
-      type: 'all',
-      query: '',
-      showAnswers: true,
-      page: 1
-    },
-    session: null,
-    timerId: null
-  };
-
-  // DOM References
-  const dom = {
-    mainContent: document.getElementById('mainContent'),
-    mainNav: document.getElementById('mainNav'),
-    brandBtn: document.getElementById('brandBtn'),
-    themeToggle: document.getElementById('themeToggle'),
-    modalBackdrop: document.getElementById('modalBackdrop'),
-    modalTitle: document.getElementById('modalTitle'),
-    modalBody: document.getElementById('modalBody'),
-    modalFooter: document.getElementById('modalFooter'),
-    modalCloseBtn: document.getElementById('modalCloseBtn'),
-    sheetBackdrop: document.getElementById('sheetBackdrop'),
-    sheetSub: document.getElementById('sheetSub'),
-    sheetBody: document.getElementById('sheetBody'),
-    sheetCloseBtn: document.getElementById('sheetCloseBtn'),
-    toastContainer: document.getElementById('toastContainer')
-  };
-
-  /* ------------------------------------------------------------------------
-     Utilities
-     ------------------------------------------------------------------------ */
-  function loadJSON(key, fallback) {
+  // =========================================================================
+  function loadStore() {
     try {
-      const raw = localStorage.getItem(key);
-      return raw ? JSON.parse(raw) : fallback;
-    } catch {
-      return fallback;
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) throw new Error('empty');
+      const parsed = JSON.parse(raw);
+      return {
+        theme: parsed.theme || 'light',
+        mastered: parsed.mastered || {},
+        wrong: parsed.wrong || {},
+        fcMastered: parsed.fcMastered || {},
+        history: Array.isArray(parsed.history) ? parsed.history : [],
+        bestMatchSec: typeof parsed.bestMatchSec === 'number' ? parsed.bestMatchSec : null,
+      };
+    } catch (_) {
+      return {
+        theme: 'light',
+        mastered: {},
+        wrong: {},
+        fcMastered: {},
+        history: [],
+        bestMatchSec: null,
+      };
     }
   }
 
-  function saveJSON(key, val) {
+  const store = loadStore();
+  function saveStore() {
     try {
-      localStorage.setItem(key, JSON.stringify(val));
-    } catch {
-      // Ignore quota errors
-    }
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+    } catch (_) {}
   }
 
-  function escapeHTML(str) {
-    if (str == null) return '';
+  // =========================================================================
+  // Runtime UI State
+  // =========================================================================
+  const ui = {
+    tab: 'exam', // 'exam' | 'practice' | 'games' | 'theory' | 'stats'
+    shuffleExam: false,
+
+    // Active exam session
+    examSession: null, // { examId, name, code, mcItems[], tfItems[], answersMc:{}, answersTf:{}, flags:{}, remainingSec, totalSec, paused, submitted, reviewFilter:'all', timerId }
+
+    // Practice state
+    practice: {
+      cat: 'all',
+      kind: 'all', // 'all' | 'mc' | 'tf'
+      onlyTrap: false,
+      onlyWrong: false,
+      query: '',
+      mode: 'focus', // 'focus' | 'list'
+      order: ALL_ITEMS.map((it) => it.id),
+      focusIdx: 0,
+      answersMc: {}, // qid -> chosen index
+      answersTf: {}, // tid -> { a:bool, ... }
+      checkedTf: {}, // tid -> true
+    },
+
+    // Games state
+    games: {
+      sub: 'flashcard', // 'flashcard' | 'match' | 'chrono'
+      fcCat: 'all',
+      fcOrder: DB.flashcards.map((f) => f.id),
+      fcIdx: 0,
+      fcFlipped: false,
+
+      // Match game
+      matchRound: 0,
+      matchPairs: [],
+      matchLeft: [],
+      matchRight: [],
+      matchSelLeft: null,
+      matchSelRight: null,
+      matchMatchedIds: {},
+      matchWrongPair: null,
+      matchMistakes: 0,
+      matchElapsed: 0,
+      matchTimerId: null,
+      matchDone: false,
+
+      // Chrono sort
+      chronoItems: [], // 5 timeline items with correctRank
+      chronoPool: [],
+      chronoPicked: [],
+      chronoChecked: false,
+    },
+
+    // Theory state
+    theory: {
+      activeTlIdx: 4, // Default highlight 15/8
+      hideTraps: false,
+      revealedTraps: {},
+    },
+  };
+
+  // =========================================================================
+  // Helpers
+  // =========================================================================
+  function esc(str) {
     return String(str)
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;');
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
   }
 
-  function stripVN(str) {
-    return String(str)
+  function shuffleArr(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  function normText(s) {
+    return String(s)
       .toLowerCase()
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
       .replace(/đ/g, 'd');
   }
 
-  function shuffleArray(arr) {
-    const copy = arr.slice();
-    for (let i = copy.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [copy[i], copy[j]] = [copy[j], copy[i]];
-    }
-    return copy;
-  }
-
   function formatTime(sec) {
     const s = Math.max(0, Math.floor(sec));
-    const hrs = Math.floor(s / 3600);
-    const mins = Math.floor((s % 3600) / 60);
-    const rem = s % 60;
-    const pad = (n) => String(n).padStart(2, '0');
-    return hrs > 0 ? `${hrs}:${pad(mins)}:${pad(rem)}` : `${pad(mins)}:${pad(rem)}`;
+    const m = Math.floor(s / 60);
+    const r = s % 60;
+    return `${String(m).padStart(2, '0')}:${String(r).padStart(2, '0')}`;
   }
 
-  function showToast(msg) {
+  function tfScoreFromRight(rightCount) {
+    // Chuẩn tỷ lệ Bộ GD&ĐT trên thang 2.0 điểm/câu:
+    // 1 ý = 10% (0.2), 2 ý = 25% (0.5), 3 ý = 50% (1.0), 4 ý = 100% (2.0)
+    return [0, 0.2, 0.5, 1.0, 2.0][rightCount] || 0;
+  }
+
+  function toast(msg) {
+    const box = document.getElementById('toastContainer');
     const el = document.createElement('div');
     el.className = 'toast';
     el.textContent = msg;
-    dom.toastContainer.appendChild(el);
+    box.appendChild(el);
     setTimeout(() => {
-      el.remove();
+      el.style.opacity = '0';
+      el.style.transition = 'opacity 0.25s ease';
+      setTimeout(() => el.remove(), 260);
     }, 2400);
   }
 
-  function applyTheme(theme) {
-    store.theme = theme === 'dark' ? 'dark' : 'light';
-    document.documentElement.setAttribute('data-theme', store.theme);
-    saveJSON(STORAGE_KEYS.theme, store.theme);
-  }
-
-  function tfScoreFromCorrectCount(count) {
-    if (count === 1) return 0.1;
-    if (count === 2) return 0.25;
-    if (count === 3) return 0.5;
-    if (count === 4) return 1.0;
-    return 0;
-  }
-
-  /* ------------------------------------------------------------------------
-     Modal & Bottom Sheet
-     ------------------------------------------------------------------------ */
-  function openModal({ title, bodyHTML, buttons }) {
-    dom.modalTitle.textContent = title;
-    dom.modalBody.innerHTML = bodyHTML;
-    dom.modalFooter.innerHTML = '';
+  function openModal(title, bodyHtml, buttons) {
+    const backdrop = document.getElementById('modalBackdrop');
+    document.getElementById('modalTitle').textContent = title;
+    document.getElementById('modalBody').innerHTML = bodyHtml;
+    const foot = document.getElementById('modalFooter');
+    foot.innerHTML = '';
     buttons.forEach((b) => {
       const btn = document.createElement('button');
       btn.type = 'button';
-      btn.className = b.className || 'btn btn-outline';
+      btn.className = `btn ${b.cls || ''}`;
       btn.textContent = b.label;
       btn.addEventListener('click', () => {
         closeModal();
         if (b.onClick) b.onClick();
       });
-      dom.modalFooter.appendChild(btn);
+      foot.appendChild(btn);
     });
-    dom.modalBackdrop.hidden = false;
+    backdrop.hidden = false;
   }
 
   function closeModal() {
-    dom.modalBackdrop.hidden = true;
+    document.getElementById('modalBackdrop').hidden = true;
   }
 
-  function openSheet() {
-    if (!state.session) return;
-    renderPaletteInto(dom.sheetBody, true);
-    const done = countAnswered(state.session);
-    dom.sheetSub.textContent = `Đã làm ${done}/${state.session.questions.length} câu`;
-    dom.sheetBackdrop.hidden = false;
-  }
-
-  function closeSheet() {
-    dom.sheetBackdrop.hidden = true;
-  }
-
-  /* ------------------------------------------------------------------------
-     Session & Grading Helpers
-     ------------------------------------------------------------------------ */
-  function stopTimer() {
-    if (state.timerId) {
-      clearInterval(state.timerId);
-      state.timerId = null;
+  function stopAllTimers() {
+    if (ui.examSession && ui.examSession.timerId) {
+      clearInterval(ui.examSession.timerId);
+      ui.examSession.timerId = null;
+    }
+    if (ui.games.matchTimerId) {
+      clearInterval(ui.games.matchTimerId);
+      ui.games.matchTimerId = null;
     }
   }
 
-  function startTimer() {
-    stopTimer();
-    if (!state.session || state.session.mode !== 'exam' || state.session.submitted) return;
-    state.timerId = setInterval(() => {
-      if (!state.session || state.session.submitted) {
-        stopTimer();
-        return;
-      }
-      state.session.remainingSec -= 1;
-      state.session.elapsedSec += 1;
-      const timerEl = document.getElementById('timerDisplay');
-      if (timerEl) {
-        timerEl.textContent = formatTime(state.session.remainingSec);
-        timerEl.classList.remove('warning', 'danger');
-        if (state.session.remainingSec <= 60) {
-          timerEl.classList.add('danger');
-        } else if (state.session.remainingSec <= 300) {
-          timerEl.classList.add('warning');
+  // =========================================================================
+  // Theme & Global Navigation
+  // =========================================================================
+  function applyTheme() {
+    document.documentElement.setAttribute('data-theme', store.theme);
+  }
+
+  function setTab(nextTab) {
+    if (ui.examSession && !ui.examSession.submitted && nextTab !== 'exam') {
+      openModal(
+        'Đang làm bài thi thử 15 phút',
+        '<p>Bạn đang làm dở <strong>' + esc(ui.examSession.name) + '</strong>. Nếu rời sang mục khác, đồng hồ sẽ tạm dừng và bài thi vẫn được giữ lại để bạn quay về làm tiếp.</p>',
+        [
+          { label: 'Ở lại làm tiếp', cls: 'btn-primary' },
+          {
+            label: 'Tạm dừng & chuyển mục',
+            onClick: () => {
+              ui.examSession.paused = true;
+              if (ui.examSession.timerId) {
+                clearInterval(ui.examSession.timerId);
+                ui.examSession.timerId = null;
+              }
+              ui.tab = nextTab;
+              syncNavAndRender();
+            },
+          },
+        ]
+      );
+      return;
+    }
+    if (ui.games.matchTimerId && nextTab !== 'games') {
+      clearInterval(ui.games.matchTimerId);
+      ui.games.matchTimerId = null;
+    }
+    ui.tab = nextTab;
+    syncNavAndRender();
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }
+
+  function syncNavAndRender() {
+    document.querySelectorAll('.nav-tab').forEach((btn) => {
+      btn.classList.toggle('active', btn.dataset.tab === ui.tab);
+    });
+    document.getElementById('navCountPractice').textContent = String(ALL_ITEMS.length);
+    render();
+  }
+
+  // =========================================================================
+  // EXAM LOGIC
+  // =========================================================================
+  function prepareMcItem(q, doShuffle) {
+    if (!doShuffle) {
+      return { ...q, options: q.options.slice(), answer: q.answer };
+    }
+    const pairs = q.options.map((text, idx) => ({ text, isAns: idx === q.answer }));
+    const sh = shuffleArr(pairs);
+    return {
+      ...q,
+      options: sh.map((p) => p.text),
+      answer: sh.findIndex((p) => p.isAns),
+    };
+  }
+
+  function startCuratedExam(examId) {
+    stopAllTimers();
+    const ex = DB.exams.find((e) => e.id === examId);
+    if (!ex) return;
+    const doShuf = ui.shuffleExam;
+    let mcList = ex.mc_ids.map((id) => prepareMcItem(MC_MAP[id], doShuf));
+    let tfList = ex.tf_ids.map((id) => ({ ...TF_MAP[id] }));
+    if (doShuf) {
+      mcList = shuffleArr(mcList);
+      tfList = shuffleArr(tfList);
+    }
+    launchExamSession({
+      examId: ex.id,
+      code: ex.code,
+      name: ex.name,
+      durationSec: ex.duration_min * 60,
+      mcItems: mcList,
+      tfItems: tfList,
+    });
+  }
+
+  function startRandomExam() {
+    stopAllTimers();
+    // Pick balanced 3 questions per category (4 * 3 = 12 MC) + 2 random TF
+    const pickedMc = [];
+    DB.categories.forEach((cat) => {
+      const pool = shuffleArr(DB.mc.filter((q) => q.cat === cat.id));
+      pickedMc.push(...pool.slice(0, 3));
+    });
+    const mcList = shuffleArr(pickedMc).map((q) => prepareMcItem(q, true));
+    const tfList = shuffleArr(DB.tf).slice(0, 2).map((t) => ({ ...t }));
+    launchExamSession({
+      examId: 'random-' + Date.now(),
+      code: 'ĐỀ NGẪU NHIÊN',
+      name: 'Đề Ngẫu Nhiên 15 Phút (Cân bằng 4 mảng)',
+      durationSec: 15 * 60,
+      mcItems: mcList,
+      tfItems: tfList,
+    });
+  }
+
+  function launchExamSession({ examId, code, name, durationSec, mcItems, tfItems }) {
+    ui.examSession = {
+      examId,
+      code,
+      name,
+      mcItems,
+      tfItems,
+      answersMc: {},
+      answersTf: {},
+      flags: {},
+      totalSec: durationSec,
+      remainingSec: durationSec,
+      paused: false,
+      submitted: false,
+      reviewFilter: 'all',
+      result: null,
+      timerId: null,
+    };
+    ui.tab = 'exam';
+    startExamTimer();
+    syncNavAndRender();
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }
+
+  function startExamTimer() {
+    const ses = ui.examSession;
+    if (!ses || ses.submitted || ses.paused) return;
+    if (ses.timerId) clearInterval(ses.timerId);
+    ses.timerId = setInterval(() => {
+      if (!ui.examSession || ui.examSession.submitted || ui.examSession.paused) return;
+      ui.examSession.remainingSec -= 1;
+      const el = document.getElementById('examTimerDisplay');
+      if (el) {
+        el.textContent = formatTime(ui.examSession.remainingSec);
+        const pill = document.getElementById('examTimerPill');
+        if (pill) {
+          pill.classList.toggle('warn', ui.examSession.remainingSec <= 180 && ui.examSession.remainingSec > 60);
+          pill.classList.toggle('danger', ui.examSession.remainingSec <= 60);
         }
       }
-      if (state.session.remainingSec <= 0) {
-        stopTimer();
-        showToast('Hết giờ làm bài! Hệ thống tự động nộp bài.');
-        finalizeSubmission();
+      if (ui.examSession.remainingSec <= 0) {
+        clearInterval(ui.examSession.timerId);
+        ui.examSession.timerId = null;
+        toast('Hết 15 phút! Hệ thống tự động nộp bài và chấm điểm.');
+        finalizeExam();
       }
     }, 1000);
   }
 
-  function buildQuestionsFromFilter({ lessonIds, typeFilter, shuffleQuestions }) {
-    let list = DB.allQuestions.filter((q) => {
-      if (lessonIds && !lessonIds.includes(q.lessonId)) return false;
-      if (typeFilter === 'mc' && q.type !== 'mc') return false;
-      if (typeFilter === 'tf' && q.type !== 'tf') return false;
-      return true;
+  function countExamAnswered(ses) {
+    let mcDone = 0;
+    ses.mcItems.forEach((q) => {
+      if (typeof ses.answersMc[q.id] === 'number') mcDone++;
     });
-    if (shuffleQuestions) {
-      list = shuffleArray(list);
-    }
-    return list;
+    let tfDone = 0;
+    ses.tfItems.forEach((t) => {
+      const ans = ses.answersTf[t.id] || {};
+      if (t.statements.every((s) => typeof ans[s.key] === 'boolean')) tfDone++;
+    });
+    return { mcDone, tfDone, totalDone: mcDone + tfDone, total: ses.mcItems.length + ses.tfItems.length };
   }
 
-  function buildThpt2025Exam() {
-    const mcPool = shuffleArray(DB.allQuestions.filter((q) => q.type === 'mc')).slice(0, 24);
-    const tfPool = shuffleArray(DB.allQuestions.filter((q) => q.type === 'tf')).slice(0, 4);
-    // Order by lesson for cleanliness inside each section
-    const lessonOrder = new Map(DB.lessons.map((l, idx) => [l.id, idx]));
-    mcPool.sort((a, b) => (lessonOrder.get(a.lessonId) - lessonOrder.get(b.lessonId)) || (a.num - b.num));
-    tfPool.sort((a, b) => (lessonOrder.get(a.lessonId) - lessonOrder.get(b.lessonId)) || (a.num - b.num));
-    return [...mcPool, ...tfPool];
+  function requestSubmitExam() {
+    const ses = ui.examSession;
+    if (!ses || ses.submitted) return;
+    const prog = countExamAnswered(ses);
+    const missing = prog.total - prog.totalDone;
+    const msg =
+      missing > 0
+        ? `<p>Bạn còn <strong>${missing} câu chưa làm đủ</strong> (đã xong ${prog.totalDone}/${prog.total} câu). Bạn vẫn muốn nộp bài ngay chứ?</p>`
+        : `<p>Bạn đã hoàn thành đủ <strong>${prog.total}/${prog.total} câu</strong>! Xác nhận nộp bài để chấm điểm chuẩn Bộ GD&amp;ĐT?</p>`;
+    openModal('Xác nhận nộp bài', msg, [
+      { label: 'Kiểm tra lại', cls: '' },
+      { label: 'Nộp bài & Chấm điểm', cls: 'btn-primary', onClick: () => finalizeExam() },
+    ]);
   }
 
-  function createSession({
-    title,
-    mode,
-    questions,
-    durationMin = 45,
-    shuffleOptions = false,
-    autoCheckPractice = true,
-    isThptPreset = false
-  }) {
-    if (!questions.length) {
-      showToast('Không có câu hỏi nào phù hợp với lựa chọn!');
-      return;
+  function finalizeExam() {
+    const ses = ui.examSession;
+    if (!ses || ses.submitted) return;
+    if (ses.timerId) {
+      clearInterval(ses.timerId);
+      ses.timerId = null;
     }
+    ses.submitted = true;
+    ses.paused = false;
 
-    const mcOrder = {};
-    questions.forEach((q) => {
-      if (q.type === 'mc') {
-        mcOrder[q.id] = shuffleOptions ? shuffleArray([0, 1, 2, 3]) : [0, 1, 2, 3];
-      }
+    let mcRight = 0;
+    const wrongIds = [];
+    const catStats = {};
+    DB.categories.forEach((c) => {
+      catStats[c.id] = { right: 0, total: 0 };
     });
 
-    stopTimer();
-    state.session = {
-      id: 'sess-' + Date.now(),
-      title,
-      mode, // 'exam' | 'practice'
-      isThptPreset,
-      questions,
-      mcOrder,
-      answers: {}, // mc: number (original option idx), tf: { a: bool, b: bool, ... }
-      checked: {}, // practice mode per-question graded state
-      submitted: false,
-      autoCheckPractice,
-      viewLayout: questions.length <= 1 ? 'focus' : 'paged', // 'paged' | 'focus'
-      page: 1,
-      focusIndex: 0,
-      durationSec: durationMin * 60,
-      remainingSec: durationMin * 60,
-      elapsedSec: 0,
-      startedAt: Date.now(),
-      resultFilter: 'all', // 'all' | 'wrong' | 'correct' | 'bookmarked'
-      resultPage: 1,
-      resultShowAll: false
-    };
-
-    state.view = 'workspace';
-    updateNavActive();
-    render();
-    window.scrollTo({ top: 0, behavior: 'instant' });
-    if (mode === 'exam') {
-      startTimer();
-    }
-  }
-
-  function getQuestionState(session, q) {
-    const ans = session.answers[q.id];
-    const isGraded = session.submitted || Boolean(session.checked[q.id]);
-
-    if (q.type === 'mc') {
-      const hasAns = typeof ans === 'number';
-      if (!isGraded) {
-        return {
-          status: hasAns ? 'answered' : 'unanswered',
-          answeredItems: hasAns ? 1 : 0,
-          totalItems: 1
-        };
-      }
-      const isCorrect = hasAns && ans === q.answer;
-      return {
-        status: isCorrect ? 'correct' : 'wrong',
-        isCorrect,
-        earnedPts: isCorrect ? 0.25 : 0,
-        maxPts: 0.25,
-        answeredItems: hasAns ? 1 : 0,
-        totalItems: 1
-      };
-    }
-
-    // TF Question
-    const tfAns = ans || {};
-    const keys = q.items.map((it) => it.key);
-    const chosenCount = keys.filter((k) => typeof tfAns[k] === 'boolean').length;
-
-    if (!isGraded) {
-      return {
-        status: chosenCount === 0 ? 'unanswered' : chosenCount === keys.length ? 'answered' : 'partial',
-        answeredItems: chosenCount,
-        totalItems: keys.length
-      };
-    }
-
-    let rightItems = 0;
-    keys.forEach((k, idx) => {
-      if (tfAns[k] === q.items[idx].answer) {
-        rightItems += 1;
-      }
-    });
-    const earnedPts = tfScoreFromCorrectCount(rightItems);
-    return {
-      status: rightItems === keys.length ? 'correct' : rightItems === 0 ? 'wrong' : 'partial',
-      isCorrect: rightItems === keys.length,
-      rightItems,
-      totalItems: keys.length,
-      earnedPts,
-      maxPts: 1.0,
-      answeredItems: chosenCount
-    };
-  }
-
-  function countAnswered(session) {
-    let count = 0;
-    session.questions.forEach((q) => {
-      const st = getQuestionState(session, q);
-      if (st.answeredItems === st.totalItems) count += 1;
-    });
-    return count;
-  }
-
-  function computeResults(session) {
-    let earnedPts = 0;
-    let maxPts = 0;
-    let mcTotal = 0;
-    let mcCorrect = 0;
-    let tfTotal = 0;
-    let tfFullCorrect = 0;
-    let tfItemTotal = 0;
-    let tfItemCorrect = 0;
-
-    const byLesson = {};
-    DB.lessons.forEach((l) => {
-      byLesson[l.id] = {
-        id: l.id,
-        shortTitle: l.shortTitle,
-        earnedPts: 0,
-        maxPts: 0,
-        count: 0,
-        fullCorrect: 0
-      };
-    });
-
-    session.questions.forEach((q) => {
-      const res = getQuestionState({ ...session, submitted: true }, q);
-      earnedPts += res.earnedPts;
-      maxPts += res.maxPts;
-
-      const lStat = byLesson[q.lessonId];
-      if (lStat) {
-        lStat.earnedPts += res.earnedPts;
-        lStat.maxPts += res.maxPts;
-        lStat.count += 1;
-        if (res.isCorrect) lStat.fullCorrect += 1;
-      }
-
-      if (q.type === 'mc') {
-        mcTotal += 1;
-        if (res.isCorrect) mcCorrect += 1;
+    ses.mcItems.forEach((q) => {
+      catStats[q.cat].total += 1;
+      const picked = ses.answersMc[q.id];
+      if (picked === q.answer) {
+        mcRight++;
+        catStats[q.cat].right += 1;
+        store.mastered[q.id] = true;
+        delete store.wrong[q.id];
       } else {
-        tfTotal += 1;
-        tfItemTotal += res.totalItems;
-        tfItemCorrect += res.rightItems;
-        if (res.isCorrect) tfFullCorrect += 1;
-      }
-
-      // Sync wrongIds in persistent store
-      if (res.isCorrect) {
-        store.wrongIds.delete(q.id);
-      } else {
-        store.wrongIds.add(q.id);
+        wrongIds.push(q.id);
+        store.wrong[q.id] = true;
       }
     });
 
-    saveJSON(STORAGE_KEYS.wrongIds, Array.from(store.wrongIds));
+    let tfScore = 0;
+    let tfRightItems = 0;
+    ses.tfItems.forEach((t) => {
+      const ans = ses.answersTf[t.id] || {};
+      let subRight = 0;
+      t.statements.forEach((s) => {
+        catStats[t.cat].total += 1;
+        if (ans[s.key] === s.answer) {
+          subRight++;
+          tfRightItems++;
+          catStats[t.cat].right += 1;
+        }
+      });
+      tfScore += tfScoreFromRight(subRight);
+      if (subRight === 4) {
+        store.mastered[t.id] = true;
+        delete store.wrong[t.id];
+      } else {
+        wrongIds.push(t.id);
+        store.wrong[t.id] = true;
+      }
+    });
 
-    const score10 = maxPts > 0 ? Math.round(((earnedPts / maxPts) * 10) * 100) / 100 : 0;
-    const pct = maxPts > 0 ? Math.round((earnedPts / maxPts) * 100) : 0;
+    const mcScore = mcRight * 0.5;
+    const totalScore = Math.round((mcScore + tfScore) * 100) / 100;
+    const elapsedSec = ses.totalSec - Math.max(0, ses.remainingSec);
 
-    return {
-      score10,
-      pct,
-      earnedPts: Math.round(earnedPts * 100) / 100,
-      maxPts: Math.round(maxPts * 100) / 100,
-      mcTotal,
-      mcCorrect,
-      tfTotal,
-      tfFullCorrect,
-      tfItemTotal,
-      tfItemCorrect,
-      lessonBreakdown: Object.values(byLesson).filter((b) => b.count > 0)
+    ses.result = {
+      mcRight,
+      mcScore,
+      tfRightItems,
+      tfTotalItems: ses.tfItems.length * 4,
+      tfScore: Math.round(tfScore * 100) / 100,
+      totalScore,
+      elapsedSec,
+      wrongIds,
+      catStats,
     };
-  }
 
-  function finalizeSubmission() {
-    if (!state.session || state.session.submitted) return;
-    stopTimer();
-    if (state.session.mode !== 'exam') {
-      state.session.elapsedSec = Math.round((Date.now() - state.session.startedAt) / 1000);
-    }
-    state.session.submitted = true;
-    const summary = computeResults(state.session);
-    state.session.summary = summary;
-
+    const now = new Date();
+    const dateStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} • ${now.getDate()}/${now.getMonth() + 1}`;
     store.history.unshift({
-      id: state.session.id,
-      title: state.session.title,
-      mode: state.session.mode,
-      score10: summary.score10,
-      pct: summary.pct,
-      totalQ: state.session.questions.length,
-      elapsedSec: state.session.elapsedSec,
-      date: new Date().toLocaleString('vi-VN', {
-        hour: '2-digit',
-        minute: '2-digit',
-        day: '2-digit',
-        month: '2-digit'
-      })
+      examId: ses.examId,
+      code: ses.code,
+      name: ses.name,
+      score: totalScore,
+      mcRight,
+      tfRightItems,
+      elapsedSec,
+      dateStr,
     });
-    store.history = store.history.slice(0, 12);
-    saveJSON(STORAGE_KEYS.history, store.history);
-
-    state.view = 'results';
-    closeSheet();
+    if (store.history.length > 30) store.history.length = 30;
+    saveStore();
     render();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  function promptSubmitExam() {
-    if (!state.session) return;
-    const total = state.session.questions.length;
-    const done = countAnswered(state.session);
-    const remaining = total - done;
-
-    const msg =
-      remaining > 0
-        ? `<p>Bạn đã hoàn thành <strong>${done}/${total}</strong> câu. Còn <strong>${remaining} câu</strong> chưa làm đủ hoặc chưa chọn đáp án.</p><p>Bạn có chắc chắn muốn nộp bài ngay để xem điểm và lời giải chi tiết không?</p>`
-        : `<p>Tuyệt vời! Bạn đã hoàn thành đủ <strong>${total}/${total}</strong> câu.</p><p>Bấm <strong>Nộp bài ngay</strong> để hệ thống chấm điểm và hiển thị giải thích chi tiết.</p>`;
-
-    openModal({
-      title: 'Xác nhận nộp bài',
-      bodyHTML: msg,
-      buttons: [
-        { label: 'Làm tiếp', className: 'btn btn-outline' },
-        {
-          label: 'Nộp bài ngay',
-          className: 'btn btn-success',
-          onClick: finalizeSubmission
-        }
-      ]
-    });
-  }
-
-  function confirmLeaveWorkspace(targetView) {
-    if (state.view === 'workspace' && state.session && state.session.mode === 'exam' && !state.session.submitted) {
-      openModal({
-        title: 'Thoát khỏi bài thi thử?',
-        bodyHTML: '<p>Bài thi thử hiện tại chưa được nộp. Nếu thoát ra ngoài, tiến độ làm bài này sẽ bị hủy.</p>',
-        buttons: [
-          { label: 'Ở lại làm tiếp', className: 'btn btn-outline' },
-          {
-            label: 'Thoát & Hủy bài',
-            className: 'btn btn-danger-soft',
-            onClick: () => {
-              stopTimer();
-              state.session = null;
-              state.view = targetView;
-              updateNavActive();
-              render();
-              window.scrollTo({ top: 0, behavior: 'instant' });
-            }
-          }
-        ]
-      });
+  function drillWrongIds(ids) {
+    if (!ids.length) {
+      toast('Tuyệt vời! Bạn không có câu sai nào để làm lại.');
       return;
     }
-    stopTimer();
-    state.view = targetView;
-    updateNavActive();
-    render();
-    window.scrollTo({ top: 0, behavior: 'instant' });
-  }
-
-  /* ------------------------------------------------------------------------
-     Render Helpers: Top Navigation
-     ------------------------------------------------------------------------ */
-  function updateNavActive() {
-    const tabs = dom.mainNav.querySelectorAll('.nav-tab');
-    tabs.forEach((t) => {
-      const v = t.dataset.view;
-      const isMatch =
-        state.view === v ||
-        (state.view === 'workspace' && state.session && state.session.mode === 'practice' && v === 'practice-setup') ||
-        (state.view === 'workspace' && state.session && state.session.mode === 'exam' && v === 'home') ||
-        (state.view === 'results' && v === 'home');
-      t.classList.toggle('active', isMatch);
+    ids.forEach((id) => {
+      store.wrong[id] = true;
+      delete ui.practice.answersMc[id];
+      delete ui.practice.answersTf[id];
+      delete ui.practice.checkedTf[id];
     });
+    saveStore();
+    ui.examSession = null;
+    ui.practice.cat = 'all';
+    ui.practice.kind = 'all';
+    ui.practice.onlyTrap = false;
+    ui.practice.onlyWrong = true;
+    ui.practice.query = '';
+    ui.practice.mode = 'focus';
+    ui.practice.focusIdx = 0;
+    ui.tab = 'practice';
+    syncNavAndRender();
+    toast(`Đã lọc ${ids.length} câu cần làm lại!`);
   }
 
-  /* ------------------------------------------------------------------------
-     View 1: Home & Mock Exam Setup (and Practice Setup)
-     ------------------------------------------------------------------------ */
-  function renderHome(isPracticeDefault = false) {
-    if (isPracticeDefault) {
-      state.builder.mode = 'practice';
-    } else if (state.view === 'home') {
-      state.builder.mode = 'exam';
-    }
+  // =========================================================================
+  // RENDER: TAB 1 — EXAM HUB / ACTIVE EXAM / RESULT
+  // =========================================================================
+  function renderExamTab() {
+    if (!ui.examSession) return renderExamHub();
+    return renderActiveExam(ui.examSession);
+  }
 
-    const wrongCount = store.wrongIds.size;
-    const bookmarkCount = store.bookmarks.size;
+  function renderExamHub() {
+    const masteredCount = Object.keys(store.mastered).length;
+    const wrongCount = Object.keys(store.wrong).length;
+    const bestScore = store.history.length ? Math.max(...store.history.map((h) => h.score)) : null;
 
-    const presetsHTML = `
-      <section class="preset-grid" aria-label="Đề xuất nhanh">
-        <article class="preset-card">
-          <div>
-            <span class="preset-badge badge-blue">Chuẩn THPT 2025</span>
-            <h3 class="preset-title">Thi Thử Đề 28 Câu</h3>
-            <p class="preset-desc">24 câu Trắc nghiệm (0.25đ) + 4 câu Đúng/Sai (1.0đ lũy tiến). Thời gian 45 phút.</p>
-          </div>
-          <button class="btn btn-primary" type="button" data-preset="thpt">Thi thử ngay</button>
-        </article>
-
-        <article class="preset-card">
-          <div>
-            <span class="preset-badge badge-green">Full 100% Đề cương</span>
-            <h3 class="preset-title">Thi Toàn Bộ ${DB.counts.total} Câu</h3>
-            <p class="preset-desc">Đầy đủ ${DB.counts.mc} câu Phần I và ${DB.counts.tf} câu Phần II từ file đề cương. Thời gian 90 phút.</p>
-          </div>
-          <button class="btn btn-soft" type="button" data-preset="full-exam">Thi Full ${DB.counts.total} câu</button>
-        </article>
-
-        <article class="preset-card">
-          <div>
-            <span class="preset-badge badge-amber">Chuyên sâu Phần II</span>
-            <h3 class="preset-title">Luyện Đúng / Sai (${DB.counts.tf} câu)</h3>
-            <p class="preset-desc">Toàn bộ ${DB.counts.tf} câu đọc tư liệu lịch sử, chấm từng ý a, b, c, d kèm giải thích chi tiết.</p>
-          </div>
-          <button class="btn btn-outline" type="button" data-preset="tf-practice">Ôn Phần II ngay</button>
-        </article>
-
-        <article class="preset-card">
-          <div>
-            <span class="preset-badge badge-rose">Sửa lỗi sai</span>
-            <h3 class="preset-title">Câu Làm Sai (${wrongCount})</h3>
-            <p class="preset-desc">Ôn tập lại những câu hỏi bạn từng làm sai hoặc đánh dấu sao (${bookmarkCount} câu).</p>
-          </div>
-          <div style="display:flex; gap:6px;">
-            <button class="btn btn-danger-soft" style="flex:1;" type="button" data-preset="wrong" ${wrongCount === 0 ? 'disabled' : ''}>Ôn câu sai</button>
-            <button class="btn btn-outline" type="button" data-preset="bookmarks" title="Ôn câu đã đánh dấu sao" ${bookmarkCount === 0 ? 'disabled' : ''}>★ ${bookmarkCount}</button>
-          </div>
-        </article>
-      </section>
-    `;
-
-    const builderHTML = `
-      <section class="home-grid">
-        <div class="card">
-          <div class="section-header">
+    const examCards = DB.exams
+      .map((ex) => {
+        const past = store.history.filter((h) => h.examId === ex.id);
+        const best = past.length ? Math.max(...past.map((h) => h.score)) : null;
+        return `
+          <article class="card exam-card">
             <div>
-              <h2 class="section-title">Tùy chỉnh đề thi &amp; ôn tập</h2>
-              <p class="section-sub">Chọn bài học, hình thức chấm và trộn câu theo ý muốn</p>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <span class="form-label">1. Chế độ làm bài</span>
-            <div class="segmented" role="group" aria-label="Chế độ">
-              <button type="button" class="seg-btn ${state.builder.mode === 'exam' ? 'active' : ''}" data-bmode="exam">Thi thử (Tính giờ &amp; Nộp bài)</button>
-              <button type="button" class="seg-btn ${state.builder.mode === 'practice' ? 'active' : ''}" data-bmode="practice">Ôn tập (Chấm từng câu)</button>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-              <span class="form-label" style="margin:0;">2. Phạm vi bài học</span>
-              <button type="button" class="btn btn-sm btn-outline" id="toggleAllLessonsBtn">Chọn / Bỏ tất cả</button>
-            </div>
-            <div class="chip-grid" id="lessonChips">
-              ${DB.lessons
-                .map((l) => {
-                  const checked = state.builder.selectedLessons.includes(l.id);
-                  const total = l.mc.length + l.tf.length;
-                  return `
-                    <label class="chip-toggle ${checked ? 'selected' : ''}">
-                      <input type="checkbox" value="${l.id}" ${checked ? 'checked' : ''} />
-                      <span>${escapeHTML(l.shortTitle)} (${total})</span>
-                    </label>
-                  `;
-                })
-                .join('')}
-            </div>
-          </div>
-
-          <div class="form-group">
-            <span class="form-label">3. Dạng câu hỏi</span>
-            <div class="segmented" role="group" aria-label="Dạng câu hỏi">
-              <button type="button" class="seg-btn ${state.builder.typeFilter === 'all' ? 'active' : ''}" data-btype="all">Tất cả (Phần I + II)</button>
-              <button type="button" class="seg-btn ${state.builder.typeFilter === 'mc' ? 'active' : ''}" data-btype="mc">Phần I: Trắc nghiệm</button>
-              <button type="button" class="seg-btn ${state.builder.typeFilter === 'tf' ? 'active' : ''}" data-btype="tf">Phần II: Đúng - Sai</button>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <span class="form-label">4. Tùy chọn thêm</span>
-            <div class="switch-row">
-              <label for="optShuffleQ">Xáo trộn thứ tự câu hỏi</label>
-              <input id="optShuffleQ" type="checkbox" ${state.builder.shuffleQuestions ? 'checked' : ''} />
-            </div>
-            <div class="switch-row">
-              <label for="optShuffleOpt">Xáo trộn đáp án A, B, C, D (Phần I)</label>
-              <input id="optShuffleOpt" type="checkbox" ${state.builder.shuffleOptions ? 'checked' : ''} />
-            </div>
-            ${
-              state.builder.mode === 'exam'
-                ? `
-              <div class="switch-row">
-                <label for="optDuration">Thời gian làm bài (phút)</label>
-                <input id="optDuration" class="inline-input" type="number" min="5" max="180" step="5" value="${state.builder.durationMin}" style="width:92px;" />
-              </div>`
-                : `
-              <div class="switch-row">
-                <label for="optAutoCheck">Tự động chấm &amp; giải thích ngay khi chọn (Phần I)</label>
-                <input id="optAutoCheck" type="checkbox" ${state.builder.autoCheckPractice ? 'checked' : ''} />
-              </div>`
-            }
-          </div>
-
-          <button type="button" class="btn btn-primary" style="width:100%;" id="startCustomBtn">
-            Bắt đầu (<span id="customCountSpan">0</span> câu hỏi)
-          </button>
-        </div>
-
-        <div class="card">
-          <div class="section-header">
-            <div>
-              <h2 class="section-title">Cấu trúc 5 bài học trong đề cương</h2>
-              <p class="section-sub">100% câu hỏi được trích chuẩn xác từ file PDF</p>
-            </div>
-          </div>
-          <div class="lesson-list">
-            ${DB.lessons
-              .map(
-                (l) => `
-                <div class="lesson-item">
-                  <div class="lesson-info">
-                    <div class="lesson-topic">${escapeHTML(l.topic)}</div>
-                    <div class="lesson-name">${escapeHTML(l.title)}</div>
-                    <div class="lesson-meta">Phần I: ${l.mc.length} câu • Phần II: ${l.tf.length} câu (${l.tf.length * 4} ý)</div>
-                  </div>
-                  <div class="lesson-actions">
-                    <button class="btn btn-sm btn-soft" type="button" data-lesson-practice="${l.id}">Ôn tập</button>
-                    <button class="btn btn-sm btn-primary" type="button" data-lesson-exam="${l.id}">Thi thử</button>
-                  </div>
-                </div>`
-              )
-              .join('')}
-          </div>
-        </div>
-      </section>
-    `;
-
-    const historyHTML =
-      store.history.length > 0
-        ? `
-      <section class="card">
-        <div class="section-header">
-          <div>
-            <h2 class="section-title">Lịch sử làm bài gần đây</h2>
-            <p class="section-sub">Kết quả được lưu tự động trên thiết bị của bạn</p>
-          </div>
-          <button type="button" class="btn btn-sm btn-outline" id="clearHistoryBtn">Xóa lịch sử</button>
-        </div>
-        <div class="history-list">
-          ${store.history
-            .map(
-              (h) => `
-            <div class="history-card">
-              <div style="min-width:0;">
-                <div style="font-weight:700; font-size:0.9rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHTML(h.title)}</div>
-                <div style="font-size:0.78rem; color:var(--text-muted);">${h.date} • ${h.totalQ} câu • ${formatTime(h.elapsedSec)}</div>
+              <div class="exam-card-top">
+                <span class="badge badge-red">${esc(ex.code)}</span>
+                <span class="badge ${ex.badge.includes('PDF') ? 'badge-gold' : 'badge-info'}">${esc(ex.badge)}</span>
               </div>
-              <div class="history-score">${h.score10.toFixed(2)}đ</div>
-            </div>`
-            )
-            .join('')}
-        </div>
-      </section>`
-        : '';
+              <h3 class="exam-card-title">${esc(ex.name)}</h3>
+              <p class="exam-card-desc">${esc(ex.subtitle)}</p>
+            </div>
+            <div>
+              <div class="exam-meta-row" style="margin-bottom:12px;">
+                <span class="exam-meta-pill">⏱ 15 phút</span>
+                <span class="exam-meta-pill">12 Trắc nghiệm (6đ)</span>
+                <span class="exam-meta-pill">2 Đúng/Sai (4đ)</span>
+              </div>
+              <div class="exam-card-foot">
+                <span class="exam-best">${best !== null ? `Cao nhất: <strong>${best.toFixed(1)}/10</strong> (${past.length} lần)` : 'Chưa thi thử'}</span>
+                <button class="btn btn-primary btn-sm" data-start-exam="${ex.id}" type="button">Bắt đầu thi →</button>
+              </div>
+            </div>
+          </article>
+        `;
+      })
+      .join('');
 
-    dom.mainContent.innerHTML = `
+    const recentHtml = store.history.length
+      ? `
+        <div class="card" style="padding:18px 20px; margin-top:20px;">
+          <div class="section-header-row" style="margin-bottom:10px;">
+            <div>
+              <h3 class="section-title" style="font-size:16px;">Lịch sử làm đề gần đây</h3>
+            </div>
+            <button class="btn btn-sm" id="goStatsBtn" type="button">Xem phân tích chi tiết →</button>
+          </div>
+          <div style="overflow-x:auto;">
+            <table class="history-table">
+              <thead><tr><th>Đề thi</th><th>Điểm</th><th>Phần I (TN)</th><th>Phần II (Đ/S)</th><th>Thời gian</th><th>Lúc</th></tr></thead>
+              <tbody>
+                ${store.history
+                  .slice(0, 5)
+                  .map(
+                    (h) => `
+                  <tr>
+                    <td><strong>${esc(h.code)}</strong> — ${esc(h.name)}</td>
+                    <td><span class="badge ${h.score >= 8.5 ? 'badge-green' : h.score >= 6.5 ? 'badge-gold' : 'badge-red'}">${h.score.toFixed(2)} / 10</span></td>
+                    <td>${h.mcRight}/12 câu</td>
+                    <td>${h.tfRightItems}/8 ý</td>
+                    <td>${formatTime(h.elapsedSec)}</td>
+                    <td style="color:var(--text-muted)">${esc(h.dateStr)}</td>
+                  </tr>
+                `
+                  )
+                  .join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `
+      : '';
+
+    return `
       <div class="container">
-        <section class="hero">
+        <section class="hero-banner">
           <div>
-            <div class="hero-tag">LỊCH SỬ 12 • CHƯƠNG TRÌNH GDPT 2018</div>
-            <h1>Hệ thống Thi Thử &amp; Chấm Đúng Sai Kèm Giải Thích</h1>
-            <p>Tổng hợp đầy đủ 100% <strong>${DB.counts.total} câu hỏi</strong> (${DB.counts.mc} câu Trắc nghiệm + ${DB.counts.tf} câu Đúng/Sai) từ đề cương Giữa kì I. Chấm điểm chuẩn thang Bộ GD&amp;ĐT 2025, giải thích từng ý a, b, c, d.</p>
-            <div class="hero-actions">
-              <button type="button" class="btn btn-sm hero-mindmap-btn" id="openMindmapFromHero">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><circle cx="4.5" cy="6" r="2"/><circle cx="19.5" cy="6" r="2"/><circle cx="4.5" cy="18" r="2"/><circle cx="19.5" cy="18" r="2"/><path d="M9.7 10.2L6.1 7.4M14.3 10.2l3.6-2.8M9.7 13.8l-3.6 2.8M14.3 13.8l3.6 2.8"/></svg>
-                <span>Xem Sơ đồ tư duy 5 bài (Không sót ý)</span>
-              </button>
+            <div class="hero-kicker">LỊCH SỬ 12 • KẾT NỐI TRI THỨC • CHỦ ĐỀ 3</div>
+            <h1 class="hero-title">Bài 6: Cách Mạng Tháng Tám Năm 1945</h1>
+            <p class="hero-desc">Trọn bộ ôn kiểm tra 15 phút chuẩn form Bộ GD&amp;ĐT (12 Trắc nghiệm + 2 Đúng/Sai). Làm đề bấm giờ thực chiến, luyện kho 60 câu giải thích siêu kỹ, lật Flashcard &amp; cày game mốc thời gian!</p>
+            <div class="hero-cta-row">
+              <button class="hero-btn-white" id="heroQuickExam" type="button">⚡ Làm ngay Đề 01 (15 phút)</button>
+              <button class="hero-btn-ghost" id="heroQuickTheory" type="button">📖 Đọc 10 Bẫy Kinh Điển</button>
+              ${wrongCount > 0 ? `<button class="hero-btn-ghost" id="heroDrillWrong" type="button">❌ Xử lại ${wrongCount} câu sai</button>` : ''}
             </div>
           </div>
-          <div class="hero-stats">
+          <div class="hero-stats-grid">
             <div class="hero-stat">
-              <div class="hero-stat-val">${DB.counts.total}</div>
-              <div class="hero-stat-lbl">Tổng số câu hỏi (100%)</div>
+              <div class="hero-stat-val">${bestScore !== null ? bestScore.toFixed(1) : '—'}<span style="font-size:13px;font-weight:600;opacity:0.8"> /10</span></div>
+              <div class="hero-stat-lbl">Điểm 15 phút cao nhất</div>
             </div>
             <div class="hero-stat">
-              <div class="hero-stat-val">${DB.counts.mc} / ${DB.counts.tf}</div>
-              <div class="hero-stat-lbl">Phần I / Phần II Đúng-Sai</div>
+              <div class="hero-stat-val">${masteredCount}<span style="font-size:13px;font-weight:600;opacity:0.8"> /${ALL_ITEMS.length}</span></div>
+              <div class="hero-stat-lbl">Câu đã nắm chắc</div>
             </div>
             <div class="hero-stat">
-              <div class="hero-stat-val">${store.history.length}</div>
-              <div class="hero-stat-lbl">Lần làm bài đã lưu</div>
+              <div class="hero-stat-val">${Object.keys(store.fcMastered).length}<span style="font-size:13px;font-weight:600;opacity:0.8"> /${DB.flashcards.length}</span></div>
+              <div class="hero-stat-lbl">Flashcard đã thuộc</div>
             </div>
             <div class="hero-stat">
-              <div class="hero-stat-val">${store.wrongIds.size}</div>
-              <div class="hero-stat-lbl">Câu cần ôn lại</div>
+              <div class="hero-stat-val">${wrongCount}</div>
+              <div class="hero-stat-lbl">Câu từng sai cần ôn</div>
             </div>
           </div>
         </section>
 
-        ${presetsHTML}
-        ${builderHTML}
-        ${historyHTML}
-      </div>
-    `;
-
-    bindHomeEvents();
-    updateCustomCount();
-  }
-
-  function updateCustomCount() {
-    const span = document.getElementById('customCountSpan');
-    const btn = document.getElementById('startCustomBtn');
-    if (!span || !btn) return;
-    const count = buildQuestionsFromFilter({
-      lessonIds: state.builder.selectedLessons,
-      typeFilter: state.builder.typeFilter,
-      shuffleQuestions: false
-    }).length;
-    span.textContent = count;
-    btn.disabled = count === 0;
-  }
-
-  function bindHomeEvents() {
-    const heroMmBtn = document.getElementById('openMindmapFromHero');
-    if (heroMmBtn) {
-      heroMmBtn.addEventListener('click', () => confirmLeaveWorkspace('mindmap'));
-    }
-
-    // Quick presets
-    dom.mainContent.querySelectorAll('[data-preset]').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const key = btn.dataset.preset;
-        if (key === 'thpt') {
-          createSession({
-            title: 'Đề Thi Thử Chuẩn THPT 2025 (28 câu)',
-            mode: 'exam',
-            questions: buildThpt2025Exam(),
-            durationMin: 45,
-            shuffleOptions: false,
-            isThptPreset: true
-          });
-        } else if (key === 'full-exam') {
-          createSession({
-            title: `Thi Full 100% Đề Cương (${DB.counts.total} câu)`,
-            mode: 'exam',
-            questions: DB.allQuestions.slice(),
-            durationMin: 90,
-            shuffleOptions: false
-          });
-        } else if (key === 'tf-practice') {
-          createSession({
-            title: `Ôn Tập Phần II — Đúng / Sai (${DB.counts.tf} câu)`,
-            mode: 'practice',
-            questions: DB.allQuestions.filter((q) => q.type === 'tf'),
-            autoCheckPractice: true
-          });
-        } else if (key === 'wrong') {
-          const qs = DB.allQuestions.filter((q) => store.wrongIds.has(q.id));
-          createSession({
-            title: `Ôn Lại Các Câu Làm Sai (${qs.length} câu)`,
-            mode: 'practice',
-            questions: qs,
-            autoCheckPractice: true
-          });
-        } else if (key === 'bookmarks') {
-          const qs = DB.allQuestions.filter((q) => store.bookmarks.has(q.id));
-          createSession({
-            title: `Ôn Các Câu Đánh Dấu Sao (${qs.length} câu)`,
-            mode: 'practice',
-            questions: qs,
-            autoCheckPractice: true
-          });
-        }
-      });
-    });
-
-    // Builder Mode toggle
-    dom.mainContent.querySelectorAll('[data-bmode]').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        state.builder.mode = btn.dataset.bmode;
-        state.view = state.builder.mode === 'practice' ? 'practice-setup' : 'home';
-        updateNavActive();
-        renderHome(state.builder.mode === 'practice');
-      });
-    });
-
-    // Builder Type toggle
-    dom.mainContent.querySelectorAll('[data-btype]').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        state.builder.typeFilter = btn.dataset.btype;
-        dom.mainContent.querySelectorAll('[data-btype]').forEach((b) => {
-          b.classList.toggle('active', b.dataset.btype === state.builder.typeFilter);
-        });
-        updateCustomCount();
-      });
-    });
-
-    // Lesson checkboxes
-    const chipsWrap = document.getElementById('lessonChips');
-    if (chipsWrap) {
-      chipsWrap.querySelectorAll('input[type="checkbox"]').forEach((cb) => {
-        cb.addEventListener('change', () => {
-          const id = cb.value;
-          if (cb.checked) {
-            if (!state.builder.selectedLessons.includes(id)) state.builder.selectedLessons.push(id);
-          } else {
-            state.builder.selectedLessons = state.builder.selectedLessons.filter((x) => x !== id);
-          }
-          cb.closest('.chip-toggle').classList.toggle('selected', cb.checked);
-          updateCustomCount();
-        });
-      });
-    }
-
-    const toggleAllBtn = document.getElementById('toggleAllLessonsBtn');
-    if (toggleAllBtn) {
-      toggleAllBtn.addEventListener('click', () => {
-        const allSelected = state.builder.selectedLessons.length === DB.lessons.length;
-        state.builder.selectedLessons = allSelected ? [] : DB.lessons.map((l) => l.id);
-        chipsWrap.querySelectorAll('input[type="checkbox"]').forEach((cb) => {
-          cb.checked = !allSelected;
-          cb.closest('.chip-toggle').classList.toggle('selected', cb.checked);
-        });
-        updateCustomCount();
-      });
-    }
-
-    // Options
-    const optShuffleQ = document.getElementById('optShuffleQ');
-    if (optShuffleQ) optShuffleQ.addEventListener('change', () => (state.builder.shuffleQuestions = optShuffleQ.checked));
-    const optShuffleOpt = document.getElementById('optShuffleOpt');
-    if (optShuffleOpt) optShuffleOpt.addEventListener('change', () => (state.builder.shuffleOptions = optShuffleOpt.checked));
-    const optDuration = document.getElementById('optDuration');
-    if (optDuration) {
-      optDuration.addEventListener('change', () => {
-        state.builder.durationMin = Math.min(180, Math.max(5, Number(optDuration.value) || 45));
-      });
-    }
-    const optAutoCheck = document.getElementById('optAutoCheck');
-    if (optAutoCheck) optAutoCheck.addEventListener('change', () => (state.builder.autoCheckPractice = optAutoCheck.checked));
-
-    // Start custom button
-    const startBtn = document.getElementById('startCustomBtn');
-    if (startBtn) {
-      startBtn.addEventListener('click', () => {
-        const qs = buildQuestionsFromFilter({
-          lessonIds: state.builder.selectedLessons,
-          typeFilter: state.builder.typeFilter,
-          shuffleQuestions: state.builder.shuffleQuestions
-        });
-        const labelMode = state.builder.mode === 'exam' ? 'Thi thử' : 'Ôn tập';
-        const lessonLabel =
-          state.builder.selectedLessons.length === DB.lessons.length
-            ? 'Tất cả 5 bài'
-            : `${state.builder.selectedLessons.length} bài đã chọn`;
-        createSession({
-          title: `${labelMode}: ${lessonLabel} (${qs.length} câu)`,
-          mode: state.builder.mode,
-          questions: qs,
-          durationMin: state.builder.durationMin,
-          shuffleOptions: state.builder.shuffleOptions,
-          autoCheckPractice: state.builder.autoCheckPractice
-        });
-      });
-    }
-
-    // Per-lesson quick buttons
-    dom.mainContent.querySelectorAll('[data-lesson-practice]').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const l = DB.lessons.find((x) => x.id === btn.dataset.lessonPractice);
-        if (!l) return;
-        const qs = buildQuestionsFromFilter({ lessonIds: [l.id], typeFilter: 'all', shuffleQuestions: false });
-        createSession({
-          title: `Ôn tập • ${l.shortTitle}`,
-          mode: 'practice',
-          questions: qs,
-          autoCheckPractice: true
-        });
-      });
-    });
-
-    dom.mainContent.querySelectorAll('[data-lesson-exam]').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const l = DB.lessons.find((x) => x.id === btn.dataset.lessonExam);
-        if (!l) return;
-        const qs = buildQuestionsFromFilter({ lessonIds: [l.id], typeFilter: 'all', shuffleQuestions: false });
-        createSession({
-          title: `Thi thử • ${l.shortTitle}`,
-          mode: 'exam',
-          questions: qs,
-          durationMin: 35
-        });
-      });
-    });
-
-    const clearHistoryBtn = document.getElementById('clearHistoryBtn');
-    if (clearHistoryBtn) {
-      clearHistoryBtn.addEventListener('click', () => {
-        store.history = [];
-        saveJSON(STORAGE_KEYS.history, []);
-        renderHome(state.builder.mode === 'practice');
-        showToast('Đã xóa lịch sử làm bài.');
-      });
-    }
-  }
-
-  /* ------------------------------------------------------------------------
-     Question Card HTML Builder (Shared by Workspace, Results, & Bank)
-     ------------------------------------------------------------------------ */
-  function buildQuestionCardInnerHTML(q, displayIdx, options = {}) {
-    const {
-      session = null,
-      forceReveal = false,
-      allowInteract = true
-    } = options;
-
-    const isBookmarked = store.bookmarks.has(q.id);
-    const isGraded = forceReveal || (session && (session.submitted || Boolean(session.checked[q.id])));
-    const qState = session ? getQuestionState(session, q) : null;
-
-    let statusPill = '';
-    if (isGraded && qState) {
-      if (q.type === 'mc') {
-        statusPill = qState.isCorrect
-          ? `<span class="q-status-pill badge-green">Đúng (+0.25đ)</span>`
-          : `<span class="q-status-pill badge-rose">${typeof session.answers[q.id] === 'number' ? 'Sai (0đ)' : 'Chưa chọn (0đ)'}</span>`;
-      } else {
-        const cls = qState.rightItems === 4 ? 'badge-green' : qState.rightItems === 0 ? 'badge-rose' : 'badge-amber';
-        statusPill = `<span class="q-status-pill ${cls}">Đúng ${qState.rightItems}/4 ý (+${qState.earnedPts}đ)</span>`;
-      }
-    }
-
-    const headerHTML = `
-      <div class="q-head">
-        <div class="q-tags">
-          <span class="q-num-badge">Câu ${displayIdx + 1}</span>
-          <span class="q-meta-pill">${escapeHTML(q.lessonShort)} • Câu ${q.num} (${q.type === 'mc' ? 'Phần I' : 'Phần II'})</span>
-          ${statusPill}
+        <div class="section-header-row">
+          <div>
+            <h2 class="section-title">Chọn Đề Thi Thử 15 Phút</h2>
+            <p class="section-sub">Đề 01 &amp; Đề 02 trùng khớp 100% với file PDF để bạn vừa in giấy vừa chấm tự động trên máy.</p>
+          </div>
+          <label class="toggle-label">
+            <input type="checkbox" id="shuffleExamToggle" ${ui.shuffleExam ? 'checked' : ''} />
+            <span>Trộn câu &amp; đảo đáp án A–D</span>
+          </label>
         </div>
-        <button type="button" class="bookmark-btn ${isBookmarked ? 'active' : ''}" data-action="bookmark" data-qid="${q.id}" title="Đánh dấu câu cần lưu ý">
-          <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-          <span>${isBookmarked ? 'Đã lưu' : 'Đánh dấu'}</span>
-        </button>
-      </div>
-    `;
 
-    let bodyHTML = '';
-
-    if (q.type === 'mc') {
-      const order = session && session.mcOrder[q.id] ? session.mcOrder[q.id] : [0, 1, 2, 3];
-      const userAns = session ? session.answers[q.id] : undefined;
-
-      bodyHTML = `
-        <p class="q-stem">${escapeHTML(q.question)}</p>
-        <div class="mc-options">
-          ${order
-            .map((origIdx, dispPos) => {
-              const isSelected = userAns === origIdx;
-              const isTrueOpt = origIdx === q.answer;
-              let cls = '';
-              let badge = '';
-              if (isGraded) {
-                if (isTrueOpt) {
-                  cls = 'correct';
-                  badge = `<span class="mc-badge" style="color:var(--success);">✓ Đáp án đúng</span>`;
-                } else if (isSelected) {
-                  cls = 'wrong';
-                  badge = `<span class="mc-badge" style="color:var(--danger);">✗ Bạn chọn</span>`;
-                }
-              } else if (isSelected) {
-                cls = 'selected';
-              }
-              return `
-                <button type="button" class="mc-opt ${cls}" data-action="mc-select" data-qid="${q.id}" data-orig="${origIdx}" ${!allowInteract || isGraded ? 'disabled' : ''}>
-                  <span class="mc-letter">${LETTERS[dispPos]}</span>
-                  <span class="mc-text">${escapeHTML(q.options[origIdx])}</span>
-                  ${badge}
-                </button>`;
-            })
-            .join('')}
-        </div>
-      `;
-
-      // Practice check button if not yet graded
-      if (allowInteract && session && session.mode === 'practice' && !session.submitted) {
-        if (!isGraded) {
-          bodyHTML += `
-            <div class="q-actions-row">
-              <span style="font-size:0.82rem; color:var(--text-muted);">${typeof userAns === 'number' ? 'Đã chọn phương án.' : 'Chọn 1 đáp án ở trên.'}</span>
-              <button type="button" class="btn btn-sm btn-soft" data-action="check-one" data-qid="${q.id}">Kiểm tra &amp; Giải thích</button>
-            </div>`;
-        } else {
-          bodyHTML += `
-            <div class="q-actions-row">
-              <span></span>
-              <button type="button" class="btn btn-sm btn-outline" data-action="retry-one" data-qid="${q.id}">Làm lại câu này</button>
-            </div>`;
-        }
-      }
-
-      if (isGraded) {
-        const correctDispPos = order.indexOf(q.answer);
-        bodyHTML += `
-          <div class="exp-box">
-            <div class="exp-title">Giải thích chi tiết (Đáp án: ${LETTERS[correctDispPos]})</div>
-            <div>${escapeHTML(q.explanation)}</div>
-          </div>`;
-      }
-    } else {
-      // TF Question
-      const tfAns = session && session.answers[q.id] ? session.answers[q.id] : {};
-
-      bodyHTML = `
-        <p class="q-stem">${escapeHTML(q.prompt)}</p>
-        <div class="quote-box">${escapeHTML(q.quote)}${q.source ? `<div class="quote-source">${escapeHTML(q.source)}</div>` : ''}</div>
-        ${q.extraNote ? `<div class="extra-note">${escapeHTML(q.extraNote)}</div>` : ''}
-        <div class="tf-list">
-          ${q.items
-            .map((item) => {
-              const userVal = tfAns[item.key];
-              const hasChoice = typeof userVal === 'boolean';
-              const isRight = hasChoice && userVal === item.answer;
-
-              let rowCls = '';
-              let rightBtnCls = '';
-              let wrongBtnCls = '';
-
-              if (isGraded) {
-                rowCls = forceReveal ? (item.answer ? 'correct' : '') : isRight ? 'correct' : 'wrong';
-                if (item.answer === true) rightBtnCls = 'graded-right';
-                else if (userVal === true) rightBtnCls = 'graded-wrong';
-
-                if (item.answer === false) wrongBtnCls = 'graded-right';
-                else if (userVal === false) wrongBtnCls = 'graded-wrong';
-              } else {
-                if (userVal === true) rightBtnCls = 'chosen';
-                if (userVal === false) wrongBtnCls = 'chosen';
-              }
-
-              return `
-                <div class="tf-row ${rowCls}">
-                  <div class="tf-top">
-                    <div class="tf-text">
-                      <span class="tf-key">${item.key}.</span>
-                      <span>${escapeHTML(item.text)}</span>
-                    </div>
-                    <div class="tf-controls">
-                      <button type="button" class="tf-btn ${rightBtnCls}" data-action="tf-select" data-qid="${q.id}" data-key="${item.key}" data-val="true" ${!allowInteract || isGraded ? 'disabled' : ''}>Đúng</button>
-                      <button type="button" class="tf-btn ${wrongBtnCls}" data-action="tf-select" data-qid="${q.id}" data-key="${item.key}" data-val="false" ${!allowInteract || isGraded ? 'disabled' : ''}>Sai</button>
-                    </div>
-                  </div>
-                  ${
-                    isGraded
-                      ? `<div class="tf-item-exp"><strong>Đáp án chuẩn: ${item.answer ? 'Đúng (Đ)' : 'Sai (S)'}.</strong> ${escapeHTML(item.explanation)}</div>`
-                      : ''
-                  }
-                </div>`;
-            })
-            .join('')}
-        </div>
-      `;
-
-      if (allowInteract && session && session.mode === 'practice' && !session.submitted) {
-        const chosenCnt = q.items.filter((it) => typeof tfAns[it.key] === 'boolean').length;
-        if (!isGraded) {
-          bodyHTML += `
-            <div class="q-actions-row">
-              <span style="font-size:0.82rem; color:var(--text-muted);">Đã chọn ${chosenCnt}/4 ý.</span>
-              <button type="button" class="btn btn-sm btn-soft" data-action="check-one" data-qid="${q.id}">Chấm đúng sai &amp; Giải thích</button>
-            </div>`;
-        } else {
-          bodyHTML += `
-            <div class="q-actions-row">
-              <span></span>
-              <button type="button" class="btn btn-sm btn-outline" data-action="retry-one" data-qid="${q.id}">Làm lại câu này</button>
-            </div>`;
-        }
-      }
-    }
-
-    return headerHTML + bodyHTML;
-  }
-
-  function getCardBorderClass(q, session) {
-    if (!session) return '';
-    const isGraded = session.submitted || Boolean(session.checked[q.id]);
-    if (!isGraded) return '';
-    const st = getQuestionState(session, q);
-    if (st.status === 'correct') return 'graded-correct';
-    if (st.status === 'wrong') return 'graded-wrong';
-    if (st.status === 'partial') return 'graded-partial';
-    return '';
-  }
-
-  /* ------------------------------------------------------------------------
-     View 2: Active Workspace (Exam & Practice)
-     ------------------------------------------------------------------------ */
-  function renderPaletteInto(container, isMobileSheet = false) {
-    const s = state.session;
-    if (!s) return;
-
-    const gridHTML = s.questions
-      .map((q, idx) => {
-        const st = getQuestionState(s, q);
-        const bm = store.bookmarks.has(q.id) ? 'bookmarked' : '';
-        const cur = s.viewLayout === 'focus' && s.focusIndex === idx ? 'current' : '';
-        return `<button type="button" class="p-btn ${st.status} ${bm} ${cur}" data-pidx="${idx}">${idx + 1}</button>`;
-      })
-      .join('');
-
-    container.innerHTML = `
-      <div class="palette-legend">
-        <span><i class="legend-dot" style="background:var(--surface-2); border:1px solid var(--border-strong);"></i>Chưa làm</span>
-        <span><i class="legend-dot" style="background:var(--primary);"></i>Đã làm</span>
-        ${
-          s.mode === 'practice' || s.submitted
-            ? `<span><i class="legend-dot" style="background:var(--success);"></i>Đúng</span>
-               <span><i class="legend-dot" style="background:var(--danger);"></i>Sai</span>`
-            : `<span><i class="legend-dot" style="background:var(--warning-soft); border:1px solid var(--warning);"></i>Đang làm dở</span>`
-        }
-        <span><i class="legend-dot" style="background:var(--amber-star); border-radius:50%;"></i>Lưu ý</span>
-      </div>
-      <div class="palette-grid">${gridHTML}</div>
-    `;
-
-    container.querySelectorAll('.p-btn').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const idx = Number(btn.dataset.pidx);
-        jumpToQuestion(idx);
-        if (isMobileSheet) closeSheet();
-      });
-    });
-  }
-
-  function jumpToQuestion(idx) {
-    const s = state.session;
-    if (!s) return;
-    if (s.viewLayout === 'focus') {
-      s.focusIndex = idx;
-      renderWorkspace();
-      window.scrollTo({ top: 0, behavior: 'instant' });
-    } else {
-      const targetPage = Math.floor(idx / PAGE_SIZE_QUIZ) + 1;
-      const changedPage = targetPage !== s.page;
-      s.page = targetPage;
-      if (changedPage) renderWorkspace();
-      const targetEl = document.querySelector(`.q-card[data-qid="${s.questions[idx].id}"]`);
-      if (targetEl) {
-        targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    }
-  }
-
-  function getVisibleSlice(s) {
-    if (s.viewLayout === 'focus') {
-      const idx = Math.min(Math.max(0, s.focusIndex), s.questions.length - 1);
-      return { start: idx, items: [s.questions[idx]], totalPages: s.questions.length, curPage: idx + 1 };
-    }
-    const totalPages = Math.max(1, Math.ceil(s.questions.length / PAGE_SIZE_QUIZ));
-    s.page = Math.min(Math.max(1, s.page), totalPages);
-    const start = (s.page - 1) * PAGE_SIZE_QUIZ;
-    return {
-      start,
-      items: s.questions.slice(start, start + PAGE_SIZE_QUIZ),
-      totalPages,
-      curPage: s.page
-    };
-  }
-
-  function renderWorkspace() {
-    const s = state.session;
-    if (!s) return;
-
-    const doneCount = countAnswered(s);
-    const total = s.questions.length;
-    const slice = getVisibleSlice(s);
-
-    const cardsHTML = slice.items
-      .map((q, offset) => {
-        const idx = slice.start + offset;
-        const borderCls = getCardBorderClass(q, s);
-        return `<article class="q-card ${borderCls}" data-qid="${q.id}" data-qidx="${idx}">${buildQuestionCardInnerHTML(q, idx, { session: s, allowInteract: true })}</article>`;
-      })
-      .join('');
-
-    const pagerHTML =
-      slice.totalPages > 1
-        ? `
-      <div class="pager-bar">
-        <button type="button" class="btn btn-outline btn-sm" id="prevPageBtn" ${slice.curPage <= 1 ? 'disabled' : ''}>← ${s.viewLayout === 'focus' ? 'Câu trước' : 'Trang trước'}</button>
-        <span style="font-size:0.86rem; font-weight:700; color:var(--text-secondary);">
-          ${s.viewLayout === 'focus' ? `Câu ${slice.curPage} / ${total}` : `Trang ${slice.curPage} / ${slice.totalPages}`}
-        </span>
-        <button type="button" class="btn btn-primary btn-sm" id="nextPageBtn" ${slice.curPage >= slice.totalPages ? 'disabled' : ''}>${s.viewLayout === 'focus' ? 'Câu tiếp' : 'Trang sau'} →</button>
-      </div>`
-        : '';
-
-    dom.mainContent.innerHTML = `
-      <div class="has-mobile-bar">
-        <div class="exam-bar">
-          <div class="exam-bar-inner">
-            <div class="exam-bar-left">
-              <button type="button" class="btn btn-sm btn-outline" id="exitWorkspaceBtn">← Thoát</button>
-              <div class="exam-title-wrap">
-                <div class="exam-title">${escapeHTML(s.title)}</div>
-                <div class="exam-progress-txt" id="progressTxt">Đã làm ${doneCount}/${total} câu</div>
+        <div class="exam-grid">
+          ${examCards}
+          <article class="card exam-card" style="background:linear-gradient(155deg, var(--surface) 0%, var(--gold-soft) 100%); border-color:var(--gold-border);">
+            <div>
+              <div class="exam-card-top">
+                <span class="badge badge-gold">ĐỀ NGẪU NHIÊN</span>
+                <span class="badge badge-green">Vô hạn đề mới</span>
+              </div>
+              <h3 class="exam-card-title">Đề Trộn Ngẫu Nhiên 15 Phút</h3>
+              <p class="exam-card-desc">Tự động rút 12 câu Trắc nghiệm cân bằng đều 4 mảng kiến thức + 2 câu Đúng/Sai từ kho 60 câu, tự đảo đáp án A–D chống học vẹt.</p>
+            </div>
+            <div>
+              <div class="exam-meta-row" style="margin-bottom:12px;">
+                <span class="exam-meta-pill">⏱ 15 phút</span>
+                <span class="exam-meta-pill">3 câu/chủ đề</span>
+                <span class="exam-meta-pill">Đảo A–D tự động</span>
+              </div>
+              <div class="exam-card-foot">
+                <span class="exam-best">Luyện phản xạ thật trước giờ thi</span>
+                <button class="btn btn-gold btn-sm" id="startRandomExamBtn" type="button">Tạo đề mới →</button>
               </div>
             </div>
-            <div class="exam-bar-right">
-              ${
-                s.mode === 'exam'
-                  ? `<div class="timer-pill ${s.remainingSec <= 60 ? 'danger' : s.remainingSec <= 300 ? 'warning' : ''}" id="timerDisplay">${formatTime(s.remainingSec)}</div>`
-                  : `<button type="button" class="btn btn-sm btn-soft" id="checkPageBtn">Chấm trang này</button>`
-              }
-              <button type="button" class="btn btn-sm btn-outline" id="toggleLayoutBtn" title="Đổi kiểu hiển thị 1 câu hoặc nhiều câu">
-                ${s.viewLayout === 'focus' ? 'Xem theo trang' : 'Xem 1 câu'}
-              </button>
-              <button type="button" class="btn btn-sm btn-success" id="submitTopBtn">Nộp bài</button>
-            </div>
-          </div>
+          </article>
         </div>
 
-        <div class="container">
-          <div class="workspace-layout">
-            <div class="questions-col" id="questionsCol">
-              ${cardsHTML}
-              ${pagerHTML}
-            </div>
-
-            <aside class="sidebar-col">
-              <div class="palette-card">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                  <strong style="font-size:0.95rem;">Bảng câu hỏi</strong>
-                  <span style="font-size:0.8rem; color:var(--text-muted);" id="sidebarCountTxt">${doneCount}/${total}</span>
-                </div>
-                <div id="desktopPalette"></div>
-                <button type="button" class="btn btn-success" style="width:100%; margin-top:14px;" id="submitSideBtn">Nộp bài &amp; Xem điểm</button>
-              </div>
-            </aside>
-          </div>
-        </div>
-
-        <div class="mobile-bottom-bar">
-          <button type="button" class="btn btn-outline" id="mobilePaletteBtn">Bảng câu (<span id="mobCountTxt">${doneCount}/${total}</span>)</button>
-          ${
-            slice.totalPages > 1
-              ? `<button type="button" class="btn btn-soft" id="mobNextBtn" ${slice.curPage >= slice.totalPages ? 'disabled' : ''}>Tiếp →</button>`
-              : ''
-          }
-          <button type="button" class="btn btn-success" id="submitMobBtn">Nộp bài</button>
-        </div>
+        ${recentHtml}
       </div>
     `;
-
-    renderPaletteInto(document.getElementById('desktopPalette'), false);
-    bindWorkspaceEvents();
   }
 
-  function updateSingleQuestionDOM(qid) {
-    const s = state.session;
-    if (!s) return;
-    const card = document.querySelector(`.q-card[data-qid="${qid}"]`);
-    if (card) {
-      const idx = Number(card.dataset.qidx);
-      const q = s.questions[idx];
-      card.className = `q-card ${getCardBorderClass(q, s)}`;
-      card.innerHTML = buildQuestionCardInnerHTML(q, idx, { session: s, allowInteract: true });
-    }
+  function renderActiveExam(ses) {
+    const prog = countExamAnswered(ses);
+    const isSub = ses.submitted;
+    const timerCls = ses.remainingSec <= 60 ? 'danger' : ses.remainingSec <= 180 ? 'warn' : '';
 
-    // Update progress text & palette cell without full re-render
-    const done = countAnswered(s);
-    const total = s.questions.length;
-    const progressTxt = document.getElementById('progressTxt');
-    if (progressTxt) progressTxt.textContent = `Đã làm ${done}/${total} câu`;
-    const sideCount = document.getElementById('sidebarCountTxt');
-    if (sideCount) sideCount.textContent = `${done}/${total}`;
-    const mobCount = document.getElementById('mobCountTxt');
-    if (mobCount) mobCount.textContent = `${done}/${total}`;
+    // Result Banner if submitted
+    let resultBannerHtml = '';
+    if (isSub && ses.result) {
+      const r = ses.result;
+      const pct = Math.min(100, Math.round((r.totalScore / 10) * 100));
+      let verdict = 'Cần ôn thêm lý thuyết & 10 bẫy kinh điển nhé!';
+      if (r.totalScore >= 9.5) verdict = 'Đỉnh nóc kịch trần! Mai vào lớp auto 10 điểm!';
+      else if (r.totalScore >= 8.5) verdict = 'Quá chắc tay rồi! Soi kỹ lại 1–2 câu sai là trọn vẹn 10/10!';
+      else if (r.totalScore >= 7.0) verdict = 'Khá ổn rồi đó! Xem kỹ giải thích câu bẫy để bật lên 9–10 điểm!';
 
-    const qIdx = s.questions.findIndex((x) => x.id === qid);
-    if (qIdx !== -1) {
-      const st = getQuestionState(s, s.questions[qIdx]);
-      const bm = store.bookmarks.has(qid) ? 'bookmarked' : '';
-      const cur = s.viewLayout === 'focus' && s.focusIndex === qIdx ? 'current' : '';
-      document.querySelectorAll(`.p-btn[data-pidx="${qIdx}"]`).forEach((pBtn) => {
-        pBtn.className = `p-btn ${st.status} ${bm} ${cur}`;
-      });
-    }
-  }
+      const catBarsHtml = DB.categories
+        .map((c) => {
+          const st = r.catStats[c.id];
+          const p = st.total ? Math.round((st.right / st.total) * 100) : 0;
+          return `
+            <div>
+              <div class="cat-bar-top">
+                <span>${esc(c.short)}</span>
+                <span style="color:${p >= 80 ? 'var(--success)' : p >= 50 ? 'var(--gold)' : 'var(--danger)'}">${st.right}/${st.total} (${p}%)</span>
+              </div>
+              <div class="bar-track"><div class="bar-fill" style="width:${p}%; background:${c.color}"></div></div>
+            </div>
+          `;
+        })
+        .join('');
 
-  function handleQuestionInteraction(e) {
-    const btn = e.target.closest('button[data-action]');
-    if (!btn) return;
-    const action = btn.dataset.action;
-    const qid = btn.dataset.qid;
-    const q = DB.byId[qid];
-    if (!q) return;
-
-    if (action === 'bookmark') {
-      if (store.bookmarks.has(qid)) {
-        store.bookmarks.delete(qid);
-        showToast('Đã bỏ đánh dấu câu hỏi.');
-      } else {
-        store.bookmarks.add(qid);
-        showToast('Đã đánh dấu sao câu hỏi.');
-      }
-      saveJSON(STORAGE_KEYS.bookmarks, Array.from(store.bookmarks));
-      if (state.view === 'workspace') {
-        updateSingleQuestionDOM(qid);
-      } else {
-        // Update bookmark button directly in results or bank
-        const active = store.bookmarks.has(qid);
-        btn.classList.toggle('active', active);
-        const span = btn.querySelector('span');
-        if (span) span.textContent = active ? 'Đã lưu' : 'Đánh dấu';
-      }
-      return;
-    }
-
-    const s = state.session;
-    if (!s || s.submitted) return;
-
-    if (action === 'mc-select') {
-      const origIdx = Number(btn.dataset.orig);
-      s.answers[qid] = origIdx;
-      if (s.mode === 'practice' && s.autoCheckPractice) {
-        s.checked[qid] = true;
-      }
-      updateSingleQuestionDOM(qid);
-    } else if (action === 'tf-select') {
-      const key = btn.dataset.key;
-      const val = btn.dataset.val === 'true';
-      if (!s.answers[qid]) s.answers[qid] = {};
-      s.answers[qid][key] = val;
-      updateSingleQuestionDOM(qid);
-    } else if (action === 'check-one') {
-      s.checked[qid] = true;
-      updateSingleQuestionDOM(qid);
-    } else if (action === 'retry-one') {
-      delete s.checked[qid];
-      delete s.answers[qid];
-      updateSingleQuestionDOM(qid);
-    }
-  }
-
-  function bindWorkspaceEvents() {
-    const s = state.session;
-    const qCol = document.getElementById('questionsCol');
-    if (qCol) {
-      qCol.addEventListener('click', handleQuestionInteraction);
-    }
-
-    const exitBtn = document.getElementById('exitWorkspaceBtn');
-    if (exitBtn) exitBtn.addEventListener('click', () => confirmLeaveWorkspace(s.mode === 'practice' ? 'practice-setup' : 'home'));
-
-    const submitTop = document.getElementById('submitTopBtn');
-    const submitSide = document.getElementById('submitSideBtn');
-    const submitMob = document.getElementById('submitMobBtn');
-    [submitTop, submitSide, submitMob].forEach((b) => {
-      if (b) b.addEventListener('click', promptSubmitExam);
-    });
-
-    const toggleLayoutBtn = document.getElementById('toggleLayoutBtn');
-    if (toggleLayoutBtn) {
-      toggleLayoutBtn.addEventListener('click', () => {
-        s.viewLayout = s.viewLayout === 'focus' ? 'paged' : 'focus';
-        if (s.viewLayout === 'focus') {
-          s.focusIndex = (s.page - 1) * PAGE_SIZE_QUIZ;
-        } else {
-          s.page = Math.floor(s.focusIndex / PAGE_SIZE_QUIZ) + 1;
-        }
-        renderWorkspace();
-        window.scrollTo({ top: 0, behavior: 'instant' });
-      });
-    }
-
-    const checkPageBtn = document.getElementById('checkPageBtn');
-    if (checkPageBtn) {
-      checkPageBtn.addEventListener('click', () => {
-        const slice = getVisibleSlice(s);
-        slice.items.forEach((q) => {
-          s.checked[q.id] = true;
-        });
-        renderWorkspace();
-        showToast('Đã chấm tất cả câu hỏi đang hiển thị!');
-      });
-    }
-
-    const prevBtn = document.getElementById('prevPageBtn');
-    const nextBtn = document.getElementById('nextPageBtn');
-    const mobNextBtn = document.getElementById('mobNextBtn');
-
-    if (prevBtn) {
-      prevBtn.addEventListener('click', () => {
-        if (s.viewLayout === 'focus') s.focusIndex = Math.max(0, s.focusIndex - 1);
-        else s.page = Math.max(1, s.page - 1);
-        renderWorkspace();
-        window.scrollTo({ top: 0, behavior: 'instant' });
-      });
-    }
-    const goNext = () => {
-      const totalPages = s.viewLayout === 'focus' ? s.questions.length : Math.ceil(s.questions.length / PAGE_SIZE_QUIZ);
-      if (s.viewLayout === 'focus') s.focusIndex = Math.min(totalPages - 1, s.focusIndex + 1);
-      else s.page = Math.min(totalPages, s.page + 1);
-      renderWorkspace();
-      window.scrollTo({ top: 0, behavior: 'instant' });
-    };
-    if (nextBtn) nextBtn.addEventListener('click', goNext);
-    if (mobNextBtn) mobNextBtn.addEventListener('click', goNext);
-
-    const mobilePaletteBtn = document.getElementById('mobilePaletteBtn');
-    if (mobilePaletteBtn) mobilePaletteBtn.addEventListener('click', openSheet);
-  }
-
-  /* ------------------------------------------------------------------------
-     View 3: Results & Explanations Review
-     ------------------------------------------------------------------------ */
-  function renderResults() {
-    const s = state.session;
-    if (!s || !s.summary) {
-      state.view = 'home';
-      renderHome();
-      return;
-    }
-
-    const r = s.summary;
-    const wrongQuestions = s.questions.filter((q) => !getQuestionState(s, q).isCorrect);
-
-    const filtered = s.questions
-      .map((q, idx) => ({ q, idx, st: getQuestionState(s, q) }))
-      .filter(({ q, st }) => {
-        if (s.resultFilter === 'wrong') return !st.isCorrect;
-        if (s.resultFilter === 'correct') return st.isCorrect;
-        if (s.resultFilter === 'bookmarked') return store.bookmarks.has(q.id);
-        return true;
-      });
-
-    const PAGE_SIZE_RES = 20;
-    const usePaging = !s.resultShowAll && filtered.length > 25;
-    const totalResPages = usePaging ? Math.max(1, Math.ceil(filtered.length / PAGE_SIZE_RES)) : 1;
-    s.resultPage = Math.min(Math.max(1, s.resultPage || 1), totalResPages);
-    const resStart = usePaging ? (s.resultPage - 1) * PAGE_SIZE_RES : 0;
-    const visibleFiltered = usePaging ? filtered.slice(resStart, resStart + PAGE_SIZE_RES) : filtered;
-
-    dom.mainContent.innerHTML = `
-      <div class="container">
-        <div class="result-hero">
-          <div class="score-circle" style="--pct:${r.pct}%;">
+      resultBannerHtml = `
+        <div class="card result-hero">
+          <div class="score-circle" style="--pct:${pct}">
             <div class="score-circle-inner">
-              <div class="score-num">${r.score10.toFixed(2)}</div>
-              <div class="score-scale">Thang 10 (${r.pct}%)</div>
+              <div class="score-num">${r.totalScore.toFixed(2).replace(/\.00$/, '.0')}</div>
+              <div class="score-max">trên 10 điểm</div>
             </div>
           </div>
-
-          <div>
-            <span class="preset-badge badge-blue">${escapeHTML(s.title)}</span>
-            <h2 style="margin:0 0 6px; font-size:1.35rem;">Kết quả chấm điểm chi tiết</h2>
-            <p style="margin:0; font-size:0.88rem; color:var(--text-muted);">
-              Tổng điểm đạt được: <strong>${r.earnedPts}/${r.maxPts} điểm</strong> (tính theo thang chuẩn: Trắc nghiệm 0.25đ/câu; Đúng-Sai 1 ý = 0.1đ, 2 ý = 0.25đ, 3 ý = 0.5đ, 4 ý = 1.0đ).
-            </p>
-
-            <div class="result-stats-grid">
-              <div class="r-stat">
-                <div class="r-stat-val" style="color:var(--success);">${r.mcCorrect}/${r.mcTotal}</div>
-                <div class="r-stat-lbl">Câu Phần I đúng</div>
-              </div>
-              <div class="r-stat">
-                <div class="r-stat-val" style="color:var(--primary);">${r.tfItemCorrect}/${r.tfItemTotal}</div>
-                <div class="r-stat-lbl">Ý Đúng/Sai chuẩn (${r.tfFullCorrect}/${r.tfTotal} câu trọn điểm)</div>
-              </div>
-              <div class="r-stat">
-                <div class="r-stat-val" style="color:var(--danger);">${wrongQuestions.length}</div>
-                <div class="r-stat-lbl">Câu cần xem lại</div>
-              </div>
-              <div class="r-stat">
-                <div class="r-stat-val">${formatTime(s.elapsedSec)}</div>
-                <div class="r-stat-lbl">Thời gian làm bài</div>
-              </div>
+          <div style="width:100%">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;">
+              <span class="badge badge-green">ĐÃ CHẤM ĐIỂM CHUẨN BỘ GD&amp;ĐT</span>
+              <span class="badge badge-neutral">Thời gian làm: ${formatTime(r.elapsedSec)}</span>
             </div>
-
-            <div style="display:flex; gap:10px; flex-wrap:wrap;">
-              ${
-                wrongQuestions.length > 0
-                  ? `<button type="button" class="btn btn-danger-soft" id="retryWrongBtn">Làm lại ${wrongQuestions.length} câu chưa đúng</button>`
-                  : `<span class="preset-badge badge-green" style="padding:10px 14px; font-size:0.88rem;">Xuất sắc! Bạn đúng 100% toàn bộ bài!</span>`
-              }
-              <button type="button" class="btn btn-primary" id="retakeSameBtn">Thi lại đề này</button>
-              <button type="button" class="btn btn-outline" id="backHomeBtn">Về trang chủ</button>
+            <h2 style="margin:0 0 4px 0;font-size:20px;">${esc(verdict)}</h2>
+            <div class="result-breakdown">
+              <div class="rb-box"><div class="rb-val">${r.mcRight} / 12 câu</div><div class="rb-lbl">Phần I • +${r.mcScore.toFixed(1)} điểm</div></div>
+              <div class="rb-box"><div class="rb-val">${r.tfRightItems} / ${r.tfTotalItems} ý</div><div class="rb-lbl">Phần II • +${r.tfScore.toFixed(1)} điểm</div></div>
+              <div class="rb-box"><div class="rb-val" style="color:${r.wrongIds.length ? 'var(--danger)' : 'var(--success)'}">${r.wrongIds.length} câu</div><div class="rb-lbl">Câu sai / chưa trọn điểm</div></div>
             </div>
+            <div style="display:flex;flex-wrap:wrap;gap:8px;">
+              ${r.wrongIds.length > 0 ? `<button class="btn btn-soft-danger btn-sm" id="drillExamWrongBtn" type="button">🔥 Làm lại ${r.wrongIds.length} câu sai ngay</button>` : ''}
+              <button class="btn btn-primary btn-sm" id="retakeExamBtn" type="button">↻ Thi lại đề này</button>
+              <button class="btn btn-sm" id="exitExamBtn" type="button">← Chọn đề khác</button>
+              <button class="btn btn-sm" id="toggleReviewWrongBtn" type="button">${ses.reviewFilter === 'wrong' ? 'Hiện tất cả 14 câu' : 'Chỉ lọc các câu sai'}</button>
+            </div>
+            <div class="cat-bars">${catBarsHtml}</div>
           </div>
         </div>
+      `;
+    }
 
-        <section class="breakdown-grid">
-          ${r.lessonBreakdown
-            .map((b) => {
-              const p = b.maxPts > 0 ? Math.round((b.earnedPts / b.maxPts) * 100) : 0;
-              return `
-              <div class="bd-card">
-                <div style="display:flex; justify-content:space-between; gap:8px; font-weight:700; font-size:0.88rem;">
-                  <span>${escapeHTML(b.shortTitle)}</span>
-                  <span style="color:var(--primary);">${p}%</span>
+    // Build MC cards
+    const mcCardsHtml = ses.mcItems
+      .map((q, idx) => {
+        const picked = ses.answersMc[q.id];
+        const isCorrect = isSub && picked === q.answer;
+        if (isSub && ses.reviewFilter === 'wrong' && isCorrect) return '';
+        const cat = CAT_MAP[q.cat];
+        const optsHtml = q.options
+          .map((opt, oi) => {
+            let cls = '';
+            if (!isSub && picked === oi) cls = 'selected';
+            else if (isSub) {
+              if (oi === q.answer) cls = 'correct';
+              else if (picked === oi && oi !== q.answer) cls = 'wrong';
+            }
+            return `
+              <button class="opt-btn ${cls}" type="button" data-exam-mc="${q.id}" data-opt="${oi}" ${isSub ? 'disabled' : ''}>
+                <span class="opt-key">${LETTERS[oi]}</span>
+                <span>${esc(opt)}</span>
+              </button>
+            `;
+          })
+          .join('');
+
+        const expHtml = isSub
+          ? `
+            <div class="exp-box ${isCorrect ? '' : 'is-wrong'}">
+              <div class="exp-title ${isCorrect ? 'ok' : 'bad'}">
+                ${isCorrect ? '✓ Chính xác! (+0,5 điểm)' : picked === undefined ? `✗ Bạn bỏ trống — Đáp án đúng là ${LETTERS[q.answer]}` : `✗ Chưa đúng (bạn chọn ${LETTERS[picked]}) — Đáp án đúng là ${LETTERS[q.answer]}`}
+              </div>
+              <div>${esc(q.explanation)}</div>
+              <div class="exp-tip">💡 Mẹo nhớ nhanh: ${esc(q.tip)}</div>
+            </div>
+          `
+          : '';
+
+        return `
+          <article class="card q-card" id="ex-mc-${idx + 1}">
+            <div class="q-card-head">
+              <div class="q-badges">
+                <span class="badge badge-red">Câu ${idx + 1}</span>
+                <span class="badge badge-neutral">${esc(cat.short)}</span>
+                ${isSub && q.trap ? '<span class="badge badge-gold">⚠ Câu bẫy</span>' : ''}
+              </div>
+              ${!isSub ? `<button class="flag-btn ${ses.flags[q.id] ? 'active' : ''}" data-flag="${q.id}" type="button">${ses.flags[q.id] ? '⚑ Đã đánh dấu' : '⚐ Đánh dấu'}</button>` : ''}
+            </div>
+            <p class="q-stem">${esc(q.question)}</p>
+            <div class="options-list">${optsHtml}</div>
+            ${expHtml}
+          </article>
+        `;
+      })
+      .join('');
+
+    // Build TF cards
+    const tfCardsHtml = ses.tfItems
+      .map((t, idx) => {
+        const ans = ses.answersTf[t.id] || {};
+        const subRight = t.statements.filter((s) => ans[s.key] === s.answer).length;
+        if (isSub && ses.reviewFilter === 'wrong' && subRight === 4) return '';
+        const pts = tfScoreFromRight(subRight);
+
+        const stmtsHtml = t.statements
+          .map((s) => {
+            const val = ans[s.key];
+            const ok = isSub && val === s.answer;
+            const bad = isSub && val !== s.answer;
+            return `
+              <div class="tf-row ${ok ? 'ok' : bad ? 'bad' : ''}">
+                <div class="tf-row-main">
+                  <div class="tf-stmt"><strong>${s.key})</strong> ${esc(s.text)}</div>
+                  <div class="tf-toggles">
+                    <button class="tf-pill ${!isSub && val === true ? 'picked-true' : ''} ${isSub && s.answer === true ? 'reveal-ok' : isSub && val === true && !s.answer ? 'reveal-bad' : ''}"
+                            type="button" data-exam-tf="${t.id}" data-key="${s.key}" data-val="true" ${isSub ? 'disabled' : ''}>Đúng</button>
+                    <button class="tf-pill ${!isSub && val === false ? 'picked-false' : ''} ${isSub && s.answer === false ? 'reveal-ok' : isSub && val === false && s.answer ? 'reveal-bad' : ''}"
+                            type="button" data-exam-tf="${t.id}" data-key="${s.key}" data-val="false" ${isSub ? 'disabled' : ''}>Sai</button>
+                  </div>
                 </div>
-                <div style="font-size:0.78rem; color:var(--text-muted); margin-top:2px;">Đúng trọn ${b.fullCorrect}/${b.count} câu (${Math.round(b.earnedPts * 100) / 100}/${Math.round(b.maxPts * 100) / 100}đ)</div>
-                <div class="progress-track"><div class="progress-fill" style="width:${p}%;"></div></div>
-              </div>`;
-            })
-            .join('')}
-        </section>
+                ${isSub ? `<div class="tf-row-exp"><strong>${ok ? '✓ Đúng' : '✗ Sai'} (Đáp án: ${s.answer ? 'ĐÚNG' : 'SAI'}):</strong> ${esc(s.explanation)}</div>` : ''}
+              </div>
+            `;
+          })
+          .join('');
 
-        <div class="filter-bar">
-          <strong style="font-size:0.94rem;">Xem lại đáp án &amp; giải thích (${filtered.length} câu):</strong>
-          <div class="segmented" style="width:auto; flex:1 1 auto;">
-            <button type="button" class="seg-btn ${s.resultFilter === 'all' ? 'active' : ''}" data-rfilter="all">Tất cả (${s.questions.length})</button>
-            <button type="button" class="seg-btn ${s.resultFilter === 'wrong' ? 'active' : ''}" data-rfilter="wrong">Chưa đúng (${wrongQuestions.length})</button>
-            <button type="button" class="seg-btn ${s.resultFilter === 'correct' ? 'active' : ''}" data-rfilter="correct">Đúng (${s.questions.length - wrongQuestions.length})</button>
-            <button type="button" class="seg-btn ${s.resultFilter === 'bookmarked' ? 'active' : ''}" data-rfilter="bookmarked">Đánh dấu ★</button>
+        return `
+          <article class="card q-card" id="ex-tf-${idx + 1}">
+            <div class="q-card-head">
+              <div class="q-badges">
+                <span class="badge badge-info">Phần II • Câu ${idx + 1}</span>
+                <span class="badge badge-neutral">${esc(t.title)}</span>
+                ${isSub ? `<span class="badge ${subRight === 4 ? 'badge-green' : 'badge-gold'}">Đúng ${subRight}/4 ý (+${pts.toFixed(1)}đ)</span>` : ''}
+              </div>
+              ${!isSub ? `<button class="flag-btn ${ses.flags[t.id] ? 'active' : ''}" data-flag="${t.id}" type="button">${ses.flags[t.id] ? '⚑ Đã đánh dấu' : '⚐ Đánh dấu'}</button>` : ''}
+            </div>
+            <p class="q-stem">Đọc đoạn tư liệu sau và chọn <strong>Đúng</strong> hoặc <strong>Sai</strong> cho từng nhận định a), b), c), d):</p>
+            <div class="passage-box">
+              <div>${esc(t.passage)}</div>
+              <div class="passage-src">(${esc(t.source)})</div>
+            </div>
+            <div class="tf-list">${stmtsHtml}</div>
+          </article>
+        `;
+      })
+      .join('');
+
+    // Palette buttons
+    const mcPal = ses.mcItems
+      .map((q, idx) => {
+        const picked = ses.answersMc[q.id];
+        let cls = '';
+        if (isSub) cls = picked === q.answer ? 'correct' : 'wrong';
+        else if (typeof picked === 'number') cls = 'answered';
+        if (!isSub && ses.flags[q.id]) cls += ' flagged';
+        return `<button class="pal-btn ${cls}" type="button" data-jump="ex-mc-${idx + 1}">${idx + 1}</button>`;
+      })
+      .join('');
+
+    const tfPal = ses.tfItems
+      .map((t, idx) => {
+        const ans = ses.answersTf[t.id] || {};
+        const cnt = Object.keys(ans).length;
+        const subRight = t.statements.filter((s) => ans[s.key] === s.answer).length;
+        let cls = '';
+        if (isSub) cls = subRight === 4 ? 'correct' : subRight > 0 ? 'partial' : 'wrong';
+        else if (cnt === 4) cls = 'answered';
+        else if (cnt > 0) cls = 'partial';
+        if (!isSub && ses.flags[t.id]) cls += ' flagged';
+        return `<button class="pal-btn ${cls}" type="button" data-jump="ex-tf-${idx + 1}">ĐS${idx + 1}</button>`;
+      })
+      .join('');
+
+    return `
+      <div class="container">
+        <div class="exam-sticky-bar">
+          <div class="exam-bar-left">
+            <span class="badge badge-red">${esc(ses.code)}</span>
+            <span class="exam-bar-title">${esc(ses.name)}</span>
+            <span class="exam-progress-pill">${isSub ? 'Đã nộp bài' : `Đã làm ${prog.totalDone}/${prog.total} câu`}</span>
           </div>
-          ${
-            filtered.length > 25
-              ? `<button type="button" class="btn btn-sm btn-outline" id="toggleResAllBtn">${s.resultShowAll ? 'Chia trang (20 câu)' : `Hiện cả ${filtered.length} câu`}</button>`
-              : ''
-          }
+          <div class="exam-bar-right">
+            ${
+              !isSub
+                ? `
+              <div class="timer-pill ${timerCls}" id="examTimerPill">
+                <span>⏱</span>
+                <span id="examTimerDisplay">${formatTime(ses.remainingSec)}</span>
+              </div>
+              <button class="btn btn-sm" id="pauseExamBtn" type="button">${ses.paused ? '▶ Tiếp tục' : '⏸ Tạm dừng'}</button>
+              <button class="btn btn-primary btn-sm" id="submitExamBtn" type="button">Nộp bài</button>
+              <button class="btn btn-sm" id="cancelExamBtn" type="button" title="Thoát đề thi">✕</button>
+            `
+                : `
+              <button class="btn btn-sm" id="exitExamBtnTop" type="button">← Về danh sách đề</button>
+            `
+            }
+          </div>
         </div>
 
-        <div class="questions-col" id="resultQuestionsCol">
-          ${
-            visibleFiltered.length > 0
-              ? visibleFiltered
-                  .map(({ q, idx }) => `<article class="q-card ${getCardBorderClass(q, s)}" data-qid="${q.id}">${buildQuestionCardInnerHTML(q, idx, { session: s, allowInteract: false })}</article>`)
-                  .join('')
-              : `<div class="card" style="text-align:center; color:var(--text-muted);">Không có câu hỏi nào trong bộ lọc này.</div>`
-          }
-        </div>
+        ${resultBannerHtml}
 
-        ${
-          totalResPages > 1
-            ? `
-          <div class="pager-bar" style="margin-top:16px;">
-            <button type="button" class="btn btn-outline btn-sm" id="resPrevBtn" ${s.resultPage <= 1 ? 'disabled' : ''}>← Trang trước</button>
-            <span style="font-size:0.86rem; font-weight:700;">Trang ${s.resultPage} / ${totalResPages}</span>
-            <button type="button" class="btn btn-primary btn-sm" id="resNextBtn" ${s.resultPage >= totalResPages ? 'disabled' : ''}>Trang sau →</button>
-          </div>`
-            : ''
-        }
+        <div class="exam-workspace">
+          <div>
+            <div class="part-divider">
+              <h3>PHẦN I. TRẮC NGHIỆM NHIỀU PHƯƠNG ÁN LỰA CHỌN (6,0 điểm)</h3>
+              <p>12 câu × 0,5 điểm/câu — Chọn một phương án đúng nhất cho mỗi câu hỏi.</p>
+            </div>
+            ${mcCardsHtml || '<div class="card" style="padding:18px;margin-bottom:14px;color:var(--success);font-weight:700;">🎉 Không có câu sai nào ở Phần I!</div>'}
+
+            <div class="part-divider" style="margin-top:20px;">
+              <h3>PHẦN II. TRẮC NGHIỆM ĐÚNG / SAI (4,0 điểm)</h3>
+              <p>2 câu × 2,0 điểm/câu — Thang điểm chuẩn Bộ GD&amp;ĐT: 1 ý 0,2đ • 2 ý 0,5đ • 3 ý 1,0đ • 4 ý 2,0đ.</p>
+            </div>
+            ${tfCardsHtml || '<div class="card" style="padding:18px;margin-bottom:14px;color:var(--success);font-weight:700;">🎉 Đạt trọn 4/4 điểm Phần II!</div>'}
+          </div>
+
+          <aside class="card exam-sidebar">
+            <div class="palette-title">
+              <span>Bảng câu hỏi</span>
+              <span style="font-size:12px;color:var(--text-muted)">${prog.totalDone}/${prog.total}</span>
+            </div>
+            <div style="font-size:11.5px;font-weight:700;color:var(--text-muted);margin-bottom:6px;">Phần I • Trắc nghiệm</div>
+            <div class="palette-grid">${mcPal}</div>
+            <div style="font-size:11.5px;font-weight:700;color:var(--text-muted);margin-bottom:6px;">Phần II • Đúng / Sai</div>
+            <div class="palette-grid" style="grid-template-columns:repeat(2,1fr);">${tfPal}</div>
+            <div class="palette-legend">
+              ${
+                !isSub
+                  ? `
+                <span><i class="leg-dot" style="background:var(--primary)"></i>Đã làm</span>
+                <span><i class="leg-dot" style="background:var(--surface-alt);border:1px solid var(--border-strong)"></i>Chưa làm</span>
+                <span><i class="leg-dot" style="background:#f59e0b;border-radius:50%"></i>Đánh dấu</span>
+              `
+                  : `
+                <span><i class="leg-dot" style="background:var(--success)"></i>Đúng trọn</span>
+                <span><i class="leg-dot" style="background:var(--danger)"></i>Sai</span>
+              `
+              }
+            </div>
+            ${!isSub ? `<button class="btn btn-primary" id="submitExamSideBtn" type="button" style="width:100%;margin-top:12px;">Nộp bài ngay</button>` : ''}
+          </aside>
+        </div>
       </div>
     `;
-
-    // Bind events
-    document.getElementById('resultQuestionsCol').addEventListener('click', handleQuestionInteraction);
-
-    dom.mainContent.querySelectorAll('[data-rfilter]').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        s.resultFilter = btn.dataset.rfilter;
-        s.resultPage = 1;
-        renderResults();
-      });
-    });
-
-    const toggleResAllBtn = document.getElementById('toggleResAllBtn');
-    if (toggleResAllBtn) {
-      toggleResAllBtn.addEventListener('click', () => {
-        s.resultShowAll = !s.resultShowAll;
-        s.resultPage = 1;
-        renderResults();
-      });
-    }
-
-    const resPrevBtn = document.getElementById('resPrevBtn');
-    const resNextBtn = document.getElementById('resNextBtn');
-    if (resPrevBtn) {
-      resPrevBtn.addEventListener('click', () => {
-        s.resultPage -= 1;
-        renderResults();
-        document.getElementById('resultQuestionsCol')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      });
-    }
-    if (resNextBtn) {
-      resNextBtn.addEventListener('click', () => {
-        s.resultPage += 1;
-        renderResults();
-        document.getElementById('resultQuestionsCol')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      });
-    }
-
-    const retryWrongBtn = document.getElementById('retryWrongBtn');
-    if (retryWrongBtn) {
-      retryWrongBtn.addEventListener('click', () => {
-        createSession({
-          title: `Ôn Lại Câu Sai (${wrongQuestions.length} câu)`,
-          mode: 'practice',
-          questions: wrongQuestions,
-          autoCheckPractice: true
-        });
-      });
-    }
-
-    document.getElementById('retakeSameBtn').addEventListener('click', () => {
-      createSession({
-        title: s.title,
-        mode: s.mode,
-        questions: s.questions.slice(),
-        durationMin: Math.round(s.durationSec / 60),
-        shuffleOptions: false,
-        autoCheckPractice: s.autoCheckPractice,
-        isThptPreset: s.isThptPreset
-      });
-    });
-
-    document.getElementById('backHomeBtn').addEventListener('click', () => {
-      state.session = null;
-      state.view = 'home';
-      updateNavActive();
-      render();
-      window.scrollTo({ top: 0, behavior: 'instant' });
-    });
   }
 
-  /* ------------------------------------------------------------------------
-     View 4: Question Bank (All 177 Questions Lookup)
-     ------------------------------------------------------------------------ */
-  function getFilteredBankQuestions() {
-    const qNorm = stripVN(state.bank.query.trim());
-    return DB.allQuestions.filter((q) => {
-      if (state.bank.lessonId !== 'all' && q.lessonId !== state.bank.lessonId) return false;
-      if (state.bank.type !== 'all' && q.type !== state.bank.type) return false;
+  // =========================================================================
+  // RENDER: TAB 2 — PRACTICE & FULL 60-QUESTION BANK
+  // =========================================================================
+  function getFilteredPracticeItems() {
+    const p = ui.practice;
+    const qNorm = normText(p.query.trim());
+    const mapById = Object.fromEntries(ALL_ITEMS.map((it) => [it.id, it]));
+    const ordered = p.order.map((id) => mapById[id]).filter(Boolean);
+    return ordered.filter((it) => {
+      if (p.cat !== 'all' && it.cat !== p.cat) return false;
+      if (p.kind !== 'all' && it.kind !== p.kind) return false;
+      if (p.onlyTrap && !(it.kind === 'mc' && it.trap)) return false;
+      if (p.onlyWrong && !store.wrong[it.id] && p.answersMc[it.id] === undefined && !p.checkedTf[it.id]) return false;
       if (qNorm) {
         const hay =
-          q.type === 'mc'
-            ? `${q.question} ${q.options.join(' ')} ${q.explanation}`
-            : `${q.prompt} ${q.quote} ${q.items.map((i) => `${i.text} ${i.explanation}`).join(' ')}`;
-        if (!stripVN(hay).includes(qNorm)) return false;
+          it.kind === 'mc'
+            ? normText(it.question + ' ' + it.options.join(' ') + ' ' + it.explanation)
+            : normText(it.title + ' ' + it.passage + ' ' + it.statements.map((s) => s.text).join(' '));
+        if (!hay.includes(qNorm)) return false;
       }
       return true;
     });
   }
 
-  function renderBankListOnly() {
-    const filtered = getFilteredBankQuestions();
-    const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE_BANK));
-    state.bank.page = Math.min(Math.max(1, state.bank.page), totalPages);
-    const start = (state.bank.page - 1) * PAGE_SIZE_BANK;
-    const slice = filtered.slice(start, start + PAGE_SIZE_BANK);
+  function renderPracticeCard(it, displayIdx) {
+    const p = ui.practice;
+    const cat = CAT_MAP[it.cat];
+    if (it.kind === 'mc') {
+      const picked = p.answersMc[it.id];
+      const answered = typeof picked === 'number';
+      const isCorrect = answered && picked === it.answer;
 
-    const countEl = document.getElementById('bankCountInfo');
-    const colEl = document.getElementById('bankQuestionsCol');
-    const pagerEl = document.getElementById('bankPagerRegion');
+      const optsHtml = it.options
+        .map((opt, oi) => {
+          let cls = '';
+          if (answered) {
+            if (oi === it.answer) cls = 'correct';
+            else if (picked === oi) cls = 'wrong';
+          }
+          return `
+            <button class="opt-btn ${cls}" type="button" data-prac-mc="${it.id}" data-opt="${oi}" ${answered ? 'disabled' : ''}>
+              <span class="opt-key">${LETTERS[oi]}</span>
+              <span>${esc(opt)}</span>
+            </button>
+          `;
+        })
+        .join('');
 
-    if (countEl) {
-      countEl.innerHTML = `Tìm thấy <strong>${filtered.length}</strong> câu hỏi • Trang ${state.bank.page}/${totalPages}`;
-    }
-    if (colEl) {
-      colEl.innerHTML =
-        slice.length > 0
-          ? slice
-              .map(
-                (q, offset) =>
-                  `<article class="q-card" data-qid="${q.id}">${buildQuestionCardInnerHTML(q, start + offset, {
-                    forceReveal: state.bank.showAnswers,
-                    allowInteract: false
-                  })}</article>`
-              )
-              .join('')
-          : `<div class="card" style="text-align:center; color:var(--text-muted);">Không tìm thấy câu hỏi phù hợp. Hãy thử từ khóa khác.</div>`;
-    }
-    if (pagerEl) {
-      pagerEl.innerHTML =
-        totalPages > 1
-          ? `
-          <div class="pager-bar" style="margin-top:16px;">
-            <button type="button" class="btn btn-outline btn-sm" id="bankPrevBtn" ${state.bank.page <= 1 ? 'disabled' : ''}>← Trang trước</button>
-            <span style="font-size:0.86rem; font-weight:700;">Trang ${state.bank.page} / ${totalPages}</span>
-            <button type="button" class="btn btn-primary btn-sm" id="bankNextBtn" ${state.bank.page >= totalPages ? 'disabled' : ''}>Trang sau →</button>
-          </div>`
-          : '';
-      const prev = document.getElementById('bankPrevBtn');
-      const next = document.getElementById('bankNextBtn');
-      if (prev) {
-        prev.addEventListener('click', () => {
-          state.bank.page -= 1;
-          renderBankListOnly();
-          window.scrollTo({ top: 0, behavior: 'instant' });
-        });
-      }
-      if (next) {
-        next.addEventListener('click', () => {
-          state.bank.page += 1;
-          renderBankListOnly();
-          window.scrollTo({ top: 0, behavior: 'instant' });
-        });
-      }
-    }
-  }
-
-  function renderBank() {
-    dom.mainContent.innerHTML = `
-      <div class="container">
-        <div class="section-header">
-          <div>
-            <h1 class="section-title" style="font-size:1.3rem;">Kho toàn bộ ${DB.counts.total} câu hỏi trong đề cương</h1>
-            <p class="section-sub">Tra cứu nhanh câu hỏi, đáp án chuẩn và giải thích chi tiết (100% từ file PDF)</p>
+      return `
+        <article class="card q-card">
+          <div class="q-card-head">
+            <div class="q-badges">
+              <span class="badge badge-red">Câu ${displayIdx}</span>
+              <span class="badge badge-neutral">${esc(cat.short)}</span>
+              <span class="badge badge-info">${it.level === 'NB' ? 'Nhận biết' : it.level === 'TH' ? 'Thông hiểu' : 'Vận dụng'}</span>
+              ${it.trap ? '<span class="badge badge-gold">⚠ Câu dễ bẫy</span>' : ''}
+              ${store.wrong[it.id] ? '<span class="badge badge-red">Từng sai</span>' : store.mastered[it.id] ? '<span class="badge badge-green">✓ Đã nắm</span>' : ''}
+            </div>
+            ${answered ? `<button class="btn btn-sm" data-prac-reset="${it.id}" type="button">↻ Làm lại</button>` : ''}
           </div>
-          <button type="button" class="btn btn-sm ${state.bank.showAnswers ? 'btn-primary' : 'btn-outline'}" id="bankToggleAnsBtn">
-            ${state.bank.showAnswers ? 'Đang hiện đáp án &amp; giải thích' : 'Đang ẩn đáp án (tự nhẩm)'}
-          </button>
-        </div>
+          <p class="q-stem">${esc(it.question)}</p>
+          <div class="options-list">${optsHtml}</div>
+          ${
+            answered
+              ? `
+            <div class="exp-box ${isCorrect ? '' : 'is-wrong'}">
+              <div class="exp-title ${isCorrect ? 'ok' : 'bad'}">
+                ${isCorrect ? '✓ Chuẩn xác! Đáp án ' + LETTERS[it.answer] : '✗ Tiếc quá! Đáp án đúng là ' + LETTERS[it.answer]}
+              </div>
+              <div>${esc(it.explanation)}</div>
+              <div class="exp-tip">💡 Mẹo nhớ nhanh: ${esc(it.tip)}</div>
+            </div>
+          `
+              : ''
+          }
+        </article>
+      `;
+    } else {
+      const ans = p.answersTf[it.id] || {};
+      const checked = !!p.checkedTf[it.id];
+      const filledCount = Object.keys(ans).length;
+      const rightCount = it.statements.filter((s) => ans[s.key] === s.answer).length;
 
-        <div class="filter-bar">
-          <input type="search" class="search-input" id="bankSearchInput" placeholder="Tìm câu hỏi, tư liệu, từ khóa (vd: I-an-ta, ASEAN, 1945)..." value="${escapeHTML(state.bank.query)}" />
-          <select class="inline-select" id="bankLessonSelect" aria-label="Lọc theo bài">
-            <option value="all" ${state.bank.lessonId === 'all' ? 'selected' : ''}>Tất cả 5 bài (${DB.counts.total})</option>
-            ${DB.lessons
-              .map(
-                (l) =>
-                  `<option value="${l.id}" ${state.bank.lessonId === l.id ? 'selected' : ''}>${escapeHTML(l.shortTitle)} (${l.mc.length + l.tf.length})</option>`
-              )
-              .join('')}
-          </select>
-          <select class="inline-select" id="bankTypeSelect" aria-label="Lọc theo dạng câu">
-            <option value="all" ${state.bank.type === 'all' ? 'selected' : ''}>Phần I + II</option>
-            <option value="mc" ${state.bank.type === 'mc' ? 'selected' : ''}>Chỉ Phần I (${DB.counts.mc})</option>
-            <option value="tf" ${state.bank.type === 'tf' ? 'selected' : ''}>Chỉ Phần II (${DB.counts.tf})</option>
-          </select>
-        </div>
+      const stmtsHtml = it.statements
+        .map((s) => {
+          const val = ans[s.key];
+          const ok = checked && val === s.answer;
+          const bad = checked && val !== s.answer;
+          return `
+            <div class="tf-row ${ok ? 'ok' : bad ? 'bad' : ''}">
+              <div class="tf-row-main">
+                <div class="tf-stmt"><strong>${s.key})</strong> ${esc(s.text)}</div>
+                <div class="tf-toggles">
+                  <button class="tf-pill ${!checked && val === true ? 'picked-true' : ''} ${checked && s.answer === true ? 'reveal-ok' : checked && val === true && !s.answer ? 'reveal-bad' : ''}"
+                          type="button" data-prac-tf="${it.id}" data-key="${s.key}" data-val="true" ${checked ? 'disabled' : ''}>Đúng</button>
+                  <button class="tf-pill ${!checked && val === false ? 'picked-false' : ''} ${checked && s.answer === false ? 'reveal-ok' : checked && val === false && s.answer ? 'reveal-bad' : ''}"
+                          type="button" data-prac-tf="${it.id}" data-key="${s.key}" data-val="false" ${checked ? 'disabled' : ''}>Sai</button>
+                </div>
+              </div>
+              ${checked ? `<div class="tf-row-exp"><strong>${ok ? '✓ Đúng' : '✗ Sai'} (Chuẩn: ${s.answer ? 'ĐÚNG' : 'SAI'}):</strong> ${esc(s.explanation)}</div>` : ''}
+            </div>
+          `;
+        })
+        .join('');
 
-        <div id="bankCountInfo" style="font-size:0.84rem; color:var(--text-muted); margin-bottom:12px;"></div>
-        <div class="questions-col" id="bankQuestionsCol"></div>
-        <div id="bankPagerRegion"></div>
-      </div>
-    `;
-
-    renderBankListOnly();
-
-    // Bind Bank events once (search input stays mounted!)
-    const bankCol = document.getElementById('bankQuestionsCol');
-    if (bankCol) bankCol.addEventListener('click', handleQuestionInteraction);
-
-    const searchInput = document.getElementById('bankSearchInput');
-    let searchDebounce = null;
-    searchInput.addEventListener('input', () => {
-      clearTimeout(searchDebounce);
-      searchDebounce = setTimeout(() => {
-        state.bank.query = searchInput.value;
-        state.bank.page = 1;
-        renderBankListOnly();
-      }, 180);
-    });
-
-    document.getElementById('bankLessonSelect').addEventListener('change', (e) => {
-      state.bank.lessonId = e.target.value;
-      state.bank.page = 1;
-      renderBankListOnly();
-    });
-
-    document.getElementById('bankTypeSelect').addEventListener('change', (e) => {
-      state.bank.type = e.target.value;
-      state.bank.page = 1;
-      renderBankListOnly();
-    });
-
-    const toggleAnsBtn = document.getElementById('bankToggleAnsBtn');
-    toggleAnsBtn.addEventListener('click', () => {
-      state.bank.showAnswers = !state.bank.showAnswers;
-      toggleAnsBtn.className = `btn btn-sm ${state.bank.showAnswers ? 'btn-primary' : 'btn-outline'}`;
-      toggleAnsBtn.innerHTML = state.bank.showAnswers ? 'Đang hiện đáp án &amp; giải thích' : 'Đang ẩn đáp án (tự nhẩm)';
-      renderBankListOnly();
-    });
+      return `
+        <article class="card q-card">
+          <div class="q-card-head">
+            <div class="q-badges">
+              <span class="badge badge-info">Đúng / Sai #${it.bankNum}</span>
+              <span class="badge badge-neutral">${esc(cat.short)}</span>
+              ${checked ? `<span class="badge ${rightCount === 4 ? 'badge-green' : 'badge-gold'}">Đúng ${rightCount}/4 ý (+${tfScoreFromRight(rightCount).toFixed(1)}đ)</span>` : ''}
+            </div>
+            <div style="display:flex;gap:6px;">
+              ${!checked ? `<button class="btn btn-primary btn-sm" data-prac-check-tf="${it.id}" type="button" ${filledCount < 4 ? 'disabled' : ''}>Kiểm tra (${filledCount}/4)</button>` : `<button class="btn btn-sm" data-prac-reset-tf="${it.id}" type="button">↻ Làm lại</button>`}
+            </div>
+          </div>
+          <p class="q-stem">${esc(it.title)} — Đọc đoạn tư liệu và chọn Đúng / Sai:</p>
+          <div class="passage-box">
+            <div>${esc(it.passage)}</div>
+            <div class="passage-src">(${esc(it.source)})</div>
+          </div>
+          <div class="tf-list">${stmtsHtml}</div>
+        </article>
+      `;
+    }
   }
 
-  /* ------------------------------------------------------------------------
-     View 5: Sơ đồ tư duy (Mind Map) — Full 5 Bài
-     ------------------------------------------------------------------------ */
-  function getActiveMindMap() {
-    return MINDMAPS.find((m) => m.id === state.mindmap.lessonId) || MINDMAPS[0] || null;
-  }
+  function renderPracticeTab() {
+    const p = ui.practice;
+    const items = getFilteredPracticeItems();
+    if (p.focusIdx >= items.length) p.focusIdx = Math.max(0, items.length - 1);
+    const wrongCount = Object.keys(store.wrong).length;
+    const trapCount = DB.mc.filter((q) => q.trap).length;
 
-  function countMindMapMetrics(mm) {
-    let nodes = 0;
-    let items = 0;
-    for (const b of mm.branches) {
-      nodes += b.children.length;
-      for (const c of b.children) {
-        items += c.points.length + (c.traps ? c.traps.length : 0);
-      }
-    }
-    return { branches: mm.branches.length, nodes, items };
-  }
-
-  function highlightTextHTML(rawText, query) {
-    const text = String(rawText == null ? '' : rawText).normalize('NFC');
-    const qNorm = stripVN((query || '').trim());
-    if (!qNorm) return escapeHTML(text);
-
-    let norm = '';
-    const map = [];
-    let offset = 0;
-    for (const ch of Array.from(text)) {
-      const s = stripVN(ch);
-      if (s.length === 0) {
-        if (map.length > 0) map[map.length - 1].end = offset + ch.length;
-      } else {
-        for (let k = 0; k < s.length; k++) {
-          map.push({ start: offset, end: offset + ch.length });
-        }
-        norm += s;
-      }
-      offset += ch.length;
-    }
-
-    const ranges = [];
-    let pos = 0;
-    while (pos <= norm.length - qNorm.length) {
-      const idx = norm.indexOf(qNorm, pos);
-      if (idx === -1) break;
-      const origStart = map[idx].start;
-      const origEnd = map[idx + qNorm.length - 1].end;
-      if (ranges.length && ranges[ranges.length - 1][1] >= origStart) {
-        ranges[ranges.length - 1][1] = Math.max(ranges[ranges.length - 1][1], origEnd);
-      } else {
-        ranges.push([origStart, origEnd]);
-      }
-      pos = idx + qNorm.length;
-    }
-
-    if (ranges.length === 0) return escapeHTML(text);
-    let out = '';
-    let cursor = 0;
-    for (const [start, end] of ranges) {
-      if (start > cursor) out += escapeHTML(text.slice(cursor, start));
-      out += `<mark class="mm-hit">${escapeHTML(text.slice(start, end))}</mark>`;
-      cursor = end;
-    }
-    if (cursor < text.length) out += escapeHTML(text.slice(cursor));
-    return out;
-  }
-
-  function formatMindMapPointHTML(rawText, query) {
-    const text = String(rawText || '');
-    const m = text.match(/^([^:\n]{2,46}:)\s+(.+)$/);
-    if (m) {
-      return `<span class="mm-lead">${highlightTextHTML(m[1], query)}</span> ${highlightTextHTML(m[2], query)}`;
-    }
-    return highlightTextHTML(text, query);
-  }
-
-  function filterMindMapBranches(mm, query) {
-    const qNorm = stripVN((query || '').trim());
-    if (!qNorm) return mm.branches;
-    const out = [];
-    for (const b of mm.branches) {
-      if (stripVN(b.title).includes(qNorm)) {
-        out.push(b);
-        continue;
-      }
-      const matchedChildren = b.children.filter((c) => {
-        if (stripVN(c.title).includes(qNorm)) return true;
-        if (c.points.some((p) => stripVN(p).includes(qNorm))) return true;
-        if (c.traps && c.traps.some((t) => stripVN(t).includes(qNorm))) return true;
-        return false;
-      });
-      if (matchedChildren.length > 0) {
-        out.push(Object.assign({}, b, { children: matchedChildren }));
-      }
-    }
-    return out;
-  }
-
-  function renderMindMapLeafCardHTML(child, query, branchColor) {
-    const trapsHTML =
-      child.traps && child.traps.length > 0
-        ? `
-          <div class="mm-traps-box">
-            <div class="mm-traps-title">Lưu ý bẫy đề thi</div>
-            <ul class="mm-traps-list">
-              ${child.traps.map((t) => `<li>${highlightTextHTML(t, query)}</li>`).join('')}
-            </ul>
-          </div>`
-        : '';
-
-    return `
-      <article class="mm-leaf-card" style="--branch-color:${escapeHTML(branchColor)};">
-        <h3 class="mm-leaf-title">${highlightTextHTML(child.title, query)}</h3>
-        <ul class="mm-points-list">
-          ${child.points.map((p) => `<li class="mm-point">${formatMindMapPointHTML(p, query)}</li>`).join('')}
-        </ul>
-        ${trapsHTML}
-      </article>
-    `;
-  }
-
-  function renderMindMapCanvasOnly() {
-    const mm = getActiveMindMap();
-    const statusLine = document.getElementById('mmStatusLine');
-    const canvasRegion = document.getElementById('mmCanvasRegion');
-    const clearBtn = document.getElementById('mmClearSearchBtn');
-    const treeBtn = document.getElementById('mmLayoutTreeBtn');
-    const vertBtn = document.getElementById('mmLayoutVertBtn');
-    if (!mm || !canvasRegion) return;
-
-    const query = state.mindmap.query.trim();
-    const isSearching = query.length > 0;
-    const branches = filterMindMapBranches(mm, query);
-    const totalMetrics = countMindMapMetrics(mm);
-
-    if (clearBtn) clearBtn.hidden = !isSearching;
-    if (treeBtn) treeBtn.classList.toggle('active', state.mindmap.layout === 'tree');
-    if (vertBtn) vertBtn.classList.toggle('active', state.mindmap.layout === 'vertical');
-
-    if (statusLine) {
-      const visiblePoints = branches.reduce(
-        (acc, b) => acc + b.children.reduce((ca, c) => ca + c.points.length + (c.traps ? c.traps.length : 0), 0),
-        0
-      );
-      statusLine.innerHTML = isSearching
-        ? `<span>Đang lọc theo <strong>"${escapeHTML(query)}"</strong>: thấy <strong>${branches.length}</strong>/${mm.branches.length} nhánh (${visiblePoints} ý liên quan).</span>`
-        : `<span><strong>${escapeHTML(mm.title)}</strong> • ${totalMetrics.branches} nhánh chính • ${totalMetrics.nodes} cụm kiến thức • ${totalMetrics.items} ý trọng tâm &amp; bẫy đề thi.</span><span>${state.mindmap.layout === 'tree' ? 'Mẹo: Cuộn ngang hoặc nhấn vào tên nhánh để thu gọn/mở rộng.' : 'Mẹo: Nhấn từng nhánh để mở rộng hoặc chuyển sang Sơ đồ nhánh ngang.'}</span>`;
-    }
-
-    if (branches.length === 0) {
-      canvasRegion.innerHTML = `
-        <div class="empty-state card">
-          <p style="margin:0 0 10px; font-weight:600; color:var(--text);">Không tìm thấy ý kiến thức nào khớp với "${escapeHTML(query)}" trong ${escapeHTML(mm.shortTitle)}.</p>
-          <button type="button" class="btn btn-sm btn-primary" data-mm-clear="1">Xóa từ khóa tìm kiếm</button>
+    let bodyHtml = '';
+    if (!items.length) {
+      bodyHtml = `
+        <div class="card" style="padding:32px;text-align:center;">
+          <p style="font-size:16px;font-weight:700;margin:0 0 8px 0;">Không tìm thấy câu hỏi nào khớp bộ lọc!</p>
+          <button class="btn btn-primary btn-sm" id="clearFiltersBtn" type="button">Xóa bộ lọc</button>
         </div>
       `;
-      return;
+    } else if (p.mode === 'focus') {
+      const cur = items[p.focusIdx];
+      bodyHtml = `
+        <div class="focus-nav-bar">
+          <button class="btn btn-sm" id="pracPrevBtn" type="button" ${p.focusIdx === 0 ? 'disabled' : ''}>← Câu trước</button>
+          <span class="focus-counter">Câu ${p.focusIdx + 1} / ${items.length} <span style="font-weight:500;font-size:12.5px;color:var(--text-muted)">(Phím tắt: 1–4 chọn đáp án, ← / → chuyển câu)</span></span>
+          <button class="btn btn-primary btn-sm" id="pracNextBtn" type="button" ${p.focusIdx >= items.length - 1 ? 'disabled' : ''}>Câu tiếp →</button>
+        </div>
+        ${renderPracticeCard(cur, p.focusIdx + 1)}
+      `;
+    } else {
+      bodyHtml = items.map((it, i) => renderPracticeCard(it, i + 1)).join('');
     }
 
-    const isBranchCollapsed = (branchId) => !isSearching && Boolean(state.mindmap.collapsed[branchId]);
+    return `
+      <div class="container">
+        <div class="section-header-row">
+          <div>
+            <h2 class="section-title">Luyện Tập Chấm Tức Thì &amp; Kho 60 Câu (84 ý hỏi)</h2>
+            <p class="section-sub">52 câu Trắc nghiệm 4 lựa chọn + 8 câu Tư liệu Đúng/Sai (32 ý nhỏ) bám sát 100% SGK KNTT Bài 6.</p>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn btn-sm ${p.mode === 'focus' ? 'btn-primary' : ''}" data-prac-mode="focus" type="button">Từng câu</button>
+            <button class="btn btn-sm ${p.mode === 'list' ? 'btn-primary' : ''}" data-prac-mode="list" type="button">Danh sách</button>
+            <button class="btn btn-sm" id="pracShuffleBtn" type="button">🔀 Trộn thứ tự</button>
+          </div>
+        </div>
 
-    if (state.mindmap.layout === 'tree') {
-      canvasRegion.innerHTML = `
-        <div class="mm-tree-scroll" style="--mm-accent:${escapeHTML(mm.accent)}; --mm-accent-soft:${escapeHTML(mm.accentSoft)};">
-          <div class="mm-tree">
-            <div class="mm-root-col">
-              <div class="mm-root-node">
-                <div class="mm-root-kicker">${escapeHTML(mm.shortTitle)}</div>
-                <h2 class="mm-root-title">${escapeHTML(mm.center.title)}</h2>
-                <p class="mm-root-desc">${escapeHTML(mm.center.desc)}</p>
+        <div class="card filter-panel">
+          <div class="filter-row">
+            <button class="chip ${p.cat === 'all' ? 'active' : ''}" data-f-cat="all" type="button">Tất cả (${ALL_ITEMS.length})</button>
+            ${DB.categories
+              .map(
+                (c) =>
+                  `<button class="chip ${p.cat === c.id ? 'active' : ''}" data-f-cat="${c.id}" type="button">${esc(c.label)}</button>`
+              )
+              .join('')}
+          </div>
+          <div class="filter-row">
+            <button class="chip ${p.kind === 'all' && !p.onlyTrap && !p.onlyWrong ? 'active' : ''}" data-f-kind="all" type="button">Mọi dạng</button>
+            <button class="chip ${p.kind === 'mc' ? 'active' : ''}" data-f-kind="mc" type="button">Trắc nghiệm (${DB.mc.length})</button>
+            <button class="chip ${p.kind === 'tf' ? 'active' : ''}" data-f-kind="tf" type="button">Đúng / Sai (${DB.tf.length})</button>
+            <button class="chip ${p.onlyTrap ? 'active' : ''}" id="filterTrapBtn" type="button">⚠ Chỉ câu bẫy (${trapCount})</button>
+            <button class="chip ${p.onlyWrong ? 'active' : ''}" id="filterWrongBtn" type="button">❌ Câu từng sai (${wrongCount})</button>
+            <input class="search-input" id="pracSearchInput" type="search" value="${esc(p.query)}" placeholder="Tìm từ khóa (vd: 18/8, Bảo Đại, Quân lệnh, Đồng Nai...)" />
+          </div>
+        </div>
+
+        ${bodyHtml}
+      </div>
+    `;
+  }
+
+  // =========================================================================
+  // RENDER: TAB 3 — FLASHCARD & TIMELINE MINIGAMES
+  // =========================================================================
+  function initMatchGame(roundIdx) {
+    if (ui.games.matchTimerId) {
+      clearInterval(ui.games.matchTimerId);
+      ui.games.matchTimerId = null;
+    }
+    const g = ui.games;
+    g.matchRound = roundIdx;
+    // Slice 6 pairs from the 12 milestones (Round even: 0..5, odd: 6..11, random >1: random 6)
+    let source;
+    if (roundIdx % 3 === 0) source = DB.timeline.slice(6, 12); // Most tested Aug 18 -> Sep 2!
+    else if (roundIdx % 3 === 1) source = DB.timeline.slice(0, 6); // Mar 9 -> Aug 17
+    else source = shuffleArr(DB.timeline).slice(0, 6);
+
+    const pairs = source.map((m, i) => ({ id: 'm-' + i, date: m.date, event: m.short }));
+    g.matchPairs = pairs;
+    g.matchLeft = shuffleArr(pairs);
+    g.matchRight = shuffleArr(pairs);
+    g.matchSelLeft = null;
+    g.matchSelRight = null;
+    g.matchMatchedIds = {};
+    g.matchWrongPair = null;
+    g.matchMistakes = 0;
+    g.matchElapsed = 0;
+    g.matchDone = false;
+
+    g.matchTimerId = setInterval(() => {
+      if (ui.tab !== 'games' || ui.games.sub !== 'match' || ui.games.matchDone) return;
+      ui.games.matchElapsed += 1;
+      const el = document.getElementById('matchTimerVal');
+      if (el) el.textContent = formatTime(ui.games.matchElapsed);
+    }, 1000);
+  }
+
+  function initChronoGame() {
+    // Pick 5 distinct chronological milestones from DB.timeline
+    const idxs = shuffleArr(DB.timeline.map((_, i) => i))
+      .slice(0, 5)
+      .sort((a, b) => a - b);
+    const selected = idxs.map((origIdx, rank) => ({
+      id: 'c-' + origIdx,
+      rank,
+      date: DB.timeline[origIdx].date,
+      short: DB.timeline[origIdx].short,
+    }));
+    ui.games.chronoItems = selected;
+    ui.games.chronoPool = shuffleArr(selected);
+    ui.games.chronoPicked = [];
+    ui.games.chronoChecked = false;
+  }
+
+  function renderGamesTab() {
+    const g = ui.games;
+    let content = '';
+
+    if (g.sub === 'flashcard') {
+      const fcById = Object.fromEntries(DB.flashcards.map((f) => [f.id, f]));
+      const list = g.fcOrder
+        .map((id) => fcById[id])
+        .filter((f) => f && (g.fcCat === 'all' || f.cat === g.fcCat));
+      if (g.fcIdx >= list.length) g.fcIdx = 0;
+      const card = list[g.fcIdx];
+      const masteredInList = list.filter((f) => store.fcMastered[f.id]).length;
+      const cat = card ? CAT_MAP[card.cat] : null;
+
+      content = `
+        <div class="fc-stage">
+          <div class="filter-row" style="justify-content:center;margin-bottom:12px;">
+            <button class="chip ${g.fcCat === 'all' ? 'active' : ''}" data-fc-cat="all" type="button">Tất cả (${DB.flashcards.length})</button>
+            ${DB.categories.map((c) => `<button class="chip ${g.fcCat === c.id ? 'active' : ''}" data-fc-cat="${c.id}" type="button">${esc(c.short)}</button>`).join('')}
+          </div>
+
+          <div style="display:flex;justify-content:space-between;align-items:center;font-size:13.5px;font-weight:700;color:var(--text-secondary);">
+            <span>Thẻ ${g.fcIdx + 1} / ${list.length}</span>
+            <span style="color:var(--success)">Đã thuộc: ${masteredInList} / ${list.length} thẻ</span>
+          </div>
+          <div class="bar-track" style="margin-top:6px;">
+            <div class="bar-fill" style="width:${Math.round((masteredInList / Math.max(1, list.length)) * 100)}%;background:var(--success);"></div>
+          </div>
+
+          <div class="fc-card-wrap">
+            <div class="fc-card ${g.fcFlipped ? 'flipped' : ''}" id="fcFlipBox">
+              <div class="fc-face fc-front">
+                <div style="display:flex;gap:8px;align-items:center;">
+                  <span class="badge badge-red">${esc(cat.short)}</span>
+                  ${store.fcMastered[card.id] ? '<span class="badge badge-green">✓ Đã thuộc</span>' : '<span class="badge badge-neutral">Chưa thuộc</span>'}
+                </div>
+                <div class="fc-q">${esc(card.front)}</div>
+                <div class="fc-hint">Nhấn vào thẻ hoặc phím <strong>Space</strong> để lật đáp án</div>
+              </div>
+              <div class="fc-face fc-back">
+                <span class="badge badge-gold">ĐÁP ÁN CHUẨN SGK KNTT</span>
+                <div class="fc-a">${esc(card.back)}</div>
+                <div class="fc-hint">Đánh giá mức độ ghi nhớ của bạn bên dưới ↓</div>
               </div>
             </div>
-            <div class="mm-root-link" aria-hidden="true"></div>
-            <div class="mm-branches-col">
-              ${branches
-                .map((b) => {
-                  const collapsed = isBranchCollapsed(b.id);
-                  const branchColor = b.color || mm.accent;
-                  const leafCount = b.children.length;
-                  const childrenHTML = !collapsed
-                    ? `
-                      <div class="mm-branch-arm" aria-hidden="true"></div>
-                      <div class="mm-children-col">
-                        ${b.children
-                          .map(
-                            (child) => `
-                            <div class="mm-leaf-wrap">
-                              ${renderMindMapLeafCardHTML(child, query, branchColor)}
-                            </div>`
-                          )
-                          .join('')}
-                      </div>`
-                    : '';
+          </div>
 
-                  return `
-                    <div class="mm-branch-row" style="--branch-color:${escapeHTML(branchColor)};">
-                      <button type="button" class="mm-branch-node" data-mm-toggle="${b.id}" aria-expanded="${!collapsed}">
-                        <div class="mm-branch-head">
-                          <span class="mm-branch-title">${highlightTextHTML(b.title, query)}</span>
-                          <span class="mm-branch-toggle">${collapsed ? '+' : '−'}</span>
-                        </div>
-                        <div class="mm-branch-meta">${leafCount} cụm ý • ${collapsed ? 'Nhấn để mở' : 'Đang mở'}</div>
-                      </button>
-                      ${childrenHTML}
-                    </div>`;
+          <div class="fc-controls">
+            <button class="btn btn-sm" id="fcPrevBtn" type="button">← Trước</button>
+            <button class="btn btn-soft-danger btn-sm" id="fcNeedReviewBtn" type="button">↻ Chưa thuộc (ôn tiếp)</button>
+            <button class="btn btn-success btn-sm" id="fcMasterBtn" type="button">✓ Đã thuộc thẻ này</button>
+            <button class="btn btn-sm" id="fcNextBtn" type="button">Tiếp →</button>
+            <button class="btn btn-sm" id="fcShuffleBtn" type="button">🔀 Trộn thẻ</button>
+          </div>
+        </div>
+      `;
+    } else if (g.sub === 'match') {
+      if (!g.matchPairs.length) initMatchGame(0);
+      const matchedCount = Object.keys(g.matchMatchedIds).length;
+      const roundLabel =
+        g.matchRound % 3 === 0
+          ? 'Bộ 1: Cao trào Tổng khởi nghĩa (18/8 → 2/9)'
+          : g.matchRound % 3 === 1
+          ? 'Bộ 2: Chuẩn bị & Tân Trào (9/3 → 17/8)'
+          : 'Bộ 3: Trộn ngẫu nhiên 6 mốc';
+
+      content = `
+        <div class="card" style="padding:20px;">
+          <div class="section-header-row" style="margin-bottom:8px;">
+            <div>
+              <h3 style="margin:0;font-size:17px;">⚡ Ghép Cặp Mốc Thời Gian Siêu Tốc</h3>
+              <p class="section-sub">${esc(roundLabel)} — Chọn 1 mốc bên trái rồi chọn sự kiện tương ứng bên phải.</p>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+              <span class="badge badge-info">⏱ <span id="matchTimerVal">${formatTime(g.matchElapsed)}</span></span>
+              <span class="badge badge-green">Khớp: ${matchedCount}/6</span>
+              <span class="badge badge-red">Lỗi: ${g.matchMistakes}</span>
+              ${store.bestMatchSec !== null ? `<span class="badge badge-gold">🏆 Kỷ lục: ${store.bestMatchSec}s</span>` : ''}
+              <button class="btn btn-primary btn-sm" id="matchNewRoundBtn" type="button">↻ Đổi bộ mốc mới</button>
+            </div>
+          </div>
+
+          ${
+            g.matchDone
+              ? `
+            <div style="padding:18px;border-radius:12px;background:var(--success-soft);border:1px solid var(--success-border);text-align:center;margin:10px 0;">
+              <h3 style="margin:0 0 6px 0;color:var(--success);">🎉 Xuất sắc! Bạn ghép xong 6/6 mốc trong ${g.matchElapsed} giây (${g.matchMistakes} lỗi)!</h3>
+              <button class="btn btn-success btn-sm" id="matchNextSetBtn" type="button">Chơi tiếp bộ mốc kế tiếp →</button>
+            </div>
+          `
+              : ''
+          }
+
+          <div class="match-board">
+            <div class="match-col">
+              <div class="match-col-hdr">Mốc thời gian</div>
+              ${g.matchLeft
+                .map((p) => {
+                  const isM = !!g.matchMatchedIds[p.id];
+                  const isSel = g.matchSelLeft === p.id;
+                  const isBad = g.matchWrongPair && g.matchWrongPair.l === p.id;
+                  return `<button class="match-tile ${isM ? 'matched' : isSel ? 'selected' : ''} ${isBad ? 'shake' : ''}" type="button" data-match-l="${p.id}" ${isM ? 'disabled' : ''}>📅 ${esc(p.date)}</button>`;
+                })
+                .join('')}
+            </div>
+            <div class="match-col">
+              <div class="match-col-hdr">Sự kiện lịch sử tương ứng</div>
+              ${g.matchRight
+                .map((p) => {
+                  const isM = !!g.matchMatchedIds[p.id];
+                  const isSel = g.matchSelRight === p.id;
+                  const isBad = g.matchWrongPair && g.matchWrongPair.r === p.id;
+                  return `<button class="match-tile ${isM ? 'matched' : isSel ? 'selected' : ''} ${isBad ? 'shake' : ''}" type="button" data-match-r="${p.id}" ${isM ? 'disabled' : ''}>${esc(p.event)}</button>`;
                 })
                 .join('')}
             </div>
@@ -2051,310 +1293,845 @@
         </div>
       `;
     } else {
-      canvasRegion.innerHTML = `
-        <div class="mm-vertical" style="--mm-accent:${escapeHTML(mm.accent)}; --mm-accent-soft:${escapeHTML(mm.accentSoft)};">
-          <div class="mm-root-node">
-            <div class="mm-root-kicker">${escapeHTML(mm.shortTitle)}</div>
-            <h2 class="mm-root-title">${escapeHTML(mm.center.title)}</h2>
-            <p class="mm-root-desc">${escapeHTML(mm.center.desc)}</p>
+      if (!g.chronoItems.length) initChronoGame();
+      const pickedSet = new Set(g.chronoPicked.map((x) => x.id));
+      const slotsHtml = [0, 1, 2, 3, 4]
+        .map((i) => {
+          const item = g.chronoPicked[i];
+          const ok = g.chronoChecked && item && item.rank === i;
+          const bad = g.chronoChecked && item && item.rank !== i;
+          return `
+            <div class="chrono-slot ${item ? 'filled' : ''} ${ok ? 'ok' : bad ? 'bad' : ''}">
+              <span class="chrono-num">${i + 1}</span>
+              ${
+                item
+                  ? `<div style="flex:1;font-weight:600;font-size:14px;">${esc(item.short)} ${g.chronoChecked ? `<span class="badge ${ok ? 'badge-green' : 'badge-red'}" style="margin-left:6px;">${esc(item.date)}</span>` : ''}</div>
+                     ${!g.chronoChecked ? `<button class="btn btn-sm" data-chrono-remove="${item.id}" type="button">Bỏ</button>` : ''}`
+                  : `<span style="color:var(--text-muted);font-size:13.5px;">Chọn sự kiện thứ ${i + 1} từ cột bên trái...</span>`
+              }
+            </div>
+          `;
+        })
+        .join('');
+
+      const rightCount = g.chronoChecked ? g.chronoPicked.filter((x, i) => x.rank === i).length : 0;
+
+      content = `
+        <div class="card" style="padding:20px;">
+          <div class="section-header-row">
+            <div>
+              <h3 style="margin:0;font-size:17px;">🧭 Xếp Thứ Tự Lịch Sử (Từ Sớm → Muộn)</h3>
+              <p class="section-sub">Nhấn lần lượt 5 sự kiện theo đúng trình tự thời gian từ sớm nhất đến muộn nhất.</p>
+            </div>
+            <div style="display:flex;gap:8px;">
+              ${!g.chronoChecked ? `<button class="btn btn-primary btn-sm" id="chronoCheckBtn" type="button" ${g.chronoPicked.length < 5 ? 'disabled' : ''}>Kiểm tra thứ tự (${g.chronoPicked.length}/5)</button>` : ''}
+              <button class="btn btn-sm" id="chronoNewBtn" type="button">↻ Bộ 5 sự kiện mới</button>
+            </div>
           </div>
-          ${branches
-            .map((b) => {
-              const collapsed = isBranchCollapsed(b.id);
-              const branchColor = b.color || mm.accent;
-              return `
-                <section class="mm-vbranch" style="--branch-color:${escapeHTML(branchColor)};">
-                  <button type="button" class="mm-vbranch-head" data-mm-toggle="${b.id}" aria-expanded="${!collapsed}">
-                    <div>
-                      <div class="mm-branch-title">${highlightTextHTML(b.title, query)}</div>
-                      <div class="mm-branch-meta">${b.children.length} cụm ý trọng tâm</div>
-                    </div>
-                    <span class="mm-branch-toggle">${collapsed ? '+' : '−'}</span>
-                  </button>
-                  ${
-                    !collapsed
-                      ? `<div class="mm-vbranch-body">
-                          ${b.children.map((child) => renderMindMapLeafCardHTML(child, query, branchColor)).join('')}
-                        </div>`
-                      : ''
-                  }
-                </section>`;
-            })
-            .join('')}
+
+          ${
+            g.chronoChecked
+              ? `<div style="padding:12px 16px;border-radius:10px;margin-bottom:12px;background:${rightCount === 5 ? 'var(--success-soft)' : 'var(--gold-soft)'};border:1px solid ${rightCount === 5 ? 'var(--success-border)' : 'var(--gold-border)'};font-weight:700;">
+                  ${rightCount === 5 ? '🎉 Đúng tuyệt đối 5/5 vị trí! Bạn đã thuộc làu mạch diễn biến!' : `Bạn xếp đúng ${rightCount}/5 vị trí. Thứ tự chuẩn: ${g.chronoItems.map((x) => `${x.date} (${x.short})`).join(' → ')}`}
+                </div>`
+              : ''
+          }
+
+          <div class="chrono-grid">
+            <div>
+              <div class="match-col-hdr" style="margin-bottom:8px;">5 sự kiện đang bị xáo trộn</div>
+              <div class="match-col">
+                ${g.chronoPool
+                  .map((item) => {
+                    const used = pickedSet.has(item.id);
+                    return `<button class="match-tile ${used ? 'matched' : ''}" type="button" data-chrono-pick="${item.id}" ${used || g.chronoChecked ? 'disabled' : ''}>${esc(item.short)}</button>`;
+                  })
+                  .join('')}
+              </div>
+            </div>
+            <div>
+              <div class="match-col-hdr" style="margin-bottom:8px;">Trình tự của bạn (Sớm → Muộn)</div>
+              ${slotsHtml}
+            </div>
+          </div>
         </div>
       `;
     }
+
+    return `
+      <div class="container">
+        <div class="section-header-row">
+          <div>
+            <h2 class="section-title">Flashcard Lật Thẻ &amp; Game Học Nhanh Mốc Thời Gian</h2>
+            <p class="section-sub">Ghi nhớ sạch toàn bộ mốc ngày 13/8 → 2/9 và từ khóa ăn điểm chỉ trong 5 phút!</p>
+          </div>
+        </div>
+        <div class="subtabs">
+          <button class="subtab-btn ${g.sub === 'flashcard' ? 'active' : ''}" data-game-sub="flashcard" type="button">🃏 Flashcard (24 thẻ)</button>
+          <button class="subtab-btn ${g.sub === 'match' ? 'active' : ''}" data-game-sub="match" type="button">⚡ Ghép Cặp Mốc Thời Gian</button>
+          <button class="subtab-btn ${g.sub === 'chrono' ? 'active' : ''}" data-game-sub="chrono" type="button">🧭 Xếp Thứ Tự Lịch Sử</button>
+        </div>
+        ${content}
+      </div>
+    `;
   }
 
-  function renderMindMap() {
-    const mm = getActiveMindMap();
-    if (!mm) {
-      dom.mainContent.innerHTML = '<div class="container"><div class="card">Chưa có dữ liệu sơ đồ tư duy.</div></div>';
+  // =========================================================================
+  // RENDER: TAB 4 — THEORY, INTERACTIVE TIMELINE, 10 TRAPS & SOURCES
+  // =========================================================================
+  function renderTheoryTab() {
+    const t = ui.theory;
+    const activeTl = DB.timeline[t.activeTlIdx] || DB.timeline[0];
+
+    const tlNodes = DB.timeline
+      .map(
+        (m, i) => `
+      <button class="tl-node ${i === t.activeTlIdx ? 'active' : ''}" type="button" data-tl-idx="${i}">
+        <div class="tl-date">${esc(m.date)}</div>
+        <div class="tl-short">${esc(m.short)}</div>
+      </button>
+    `
+      )
+      .join('');
+
+    const theoryHtml = DB.theory
+      .map(
+        (sec) => `
+      <section class="card theory-card">
+        <div class="theory-card-hdr">
+          <span class="theory-num">${esc(sec.num)}</span>
+          <div>
+            <h3 style="margin:0;font-size:17.5px;">${esc(sec.title)}</h3>
+            <p class="section-sub">${esc(sec.subtitle)}</p>
+          </div>
+        </div>
+        ${sec.blocks
+          .map(
+            (b) => `
+          <div class="theory-sub">
+            <h4>${esc(b.heading)}</h4>
+            <ul>${b.points.map((pt) => `<li>${esc(pt)}</li>`).join('')}</ul>
+          </div>
+        `
+          )
+          .join('')}
+      </section>
+    `
+      )
+      .join('');
+
+    const trapsHtml = DB.traps
+      .map((tr) => {
+        const masked = t.hideTraps && !t.revealedTraps[tr.num];
+        return `
+          <article class="card trap-card">
+            <div class="trap-title"><span class="badge badge-gold">Bẫy ${tr.num}</span> ${esc(tr.title)}</div>
+            <div class="trap-wrong"><strong>✗ Dễ dính bẫy:</strong> ${esc(tr.wrong)}</div>
+            <div class="trap-right ${masked ? 'masked' : ''}" data-reveal-trap="${tr.num}" title="${masked ? 'Nhấn để mở đáp án chuẩn SGK' : ''}">
+              <strong>✓ Chuẩn SGK KNTT:</strong> ${esc(tr.right)}
+            </div>
+            <div class="trap-why ${masked ? 'masked' : ''}" data-reveal-trap="${tr.num}" style="${masked ? 'filter:blur(6px);user-select:none;cursor:pointer;' : ''}">${esc(tr.why)}</div>
+          </article>
+        `;
+      })
+      .join('');
+
+    const sourcesHtml = DB.sources
+      .map(
+        (s) => `
+      <article class="card" style="padding:18px 20px;margin-bottom:12px;">
+        <div style="font-weight:800;color:var(--info);margin-bottom:4px;">${esc(s.title)} <span style="font-weight:500;color:var(--text-muted);font-size:13px;">— ${esc(s.meta)}</span></div>
+        <div class="passage-box" style="margin:8px 0;">${esc(s.quote)}</div>
+        <div style="font-size:13.8px;"><strong>Trọng tâm ra đề Đúng/Sai:</strong> ${esc(s.takeaway)}</div>
+      </article>
+    `
+      )
+      .join('');
+
+    return `
+      <div class="container">
+        <div class="section-header-row">
+          <div>
+            <h2 class="section-title">Trục Thời Gian Tương Tác (12 Mốc Sống Còn)</h2>
+            <p class="section-sub">Nhấn vào từng mốc ngày để xem diễn biến chi tiết &amp; cảnh báo bẫy đi kèm.</p>
+          </div>
+        </div>
+
+        <div class="timeline-strip">${tlNodes}</div>
+
+        <div class="card tl-detail-card">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;">
+            <span class="badge badge-red">${esc(activeTl.date)}</span>
+            <span class="badge badge-gold">${esc(activeTl.tag)}</span>
+            <strong style="font-size:16.5px;">${esc(activeTl.short)}</strong>
+          </div>
+          <p style="margin:0 0 10px 0;">${esc(activeTl.detail)}</p>
+          <div class="exp-tip" style="margin-top:0;">⚠ Cảnh báo bẫy mốc này: ${esc(activeTl.trap)}</div>
+        </div>
+
+        <div class="section-header-row" style="margin-top:26px;">
+          <div>
+            <h2 class="section-title">⚠ 10 Bẫy Kinh Điển Kiểm Tra 15 Phút</h2>
+            <p class="section-sub">Bật chế độ che đáp án để tự nhẩm lại trước khi nhấn mở kiểm tra trí nhớ!</p>
+          </div>
+          <label class="toggle-label">
+            <input type="checkbox" id="hideTrapsToggle" ${t.hideTraps ? 'checked' : ''} />
+            <span>Che đáp án chuẩn SGK để tự ôn</span>
+          </label>
+        </div>
+        <div class="traps-grid">${trapsHtml}</div>
+
+        <h2 class="section-title" style="margin:24px 0 12px 0;">📖 Lý Thuyết Trọng Tâm SGK KNTT Bài 6</h2>
+        ${theoryHtml}
+
+        <h2 class="section-title" style="margin:24px 0 12px 0;">📜 4 Đoạn Tư Liệu Vàng Hay Ra Phần Đúng / Sai</h2>
+        ${sourcesHtml}
+      </div>
+    `;
+  }
+
+  // =========================================================================
+  // RENDER: TAB 5 — STATS & WRONG BANK
+  // =========================================================================
+  function renderStatsTab() {
+    const masteredCount = Object.keys(store.mastered).length;
+    const wrongIds = Object.keys(store.wrong);
+    const pct = Math.round((masteredCount / ALL_ITEMS.length) * 100);
+
+    const catBars = DB.categories
+      .map((c) => {
+        const items = ALL_ITEMS.filter((it) => it.cat === c.id);
+        const done = items.filter((it) => store.mastered[it.id]).length;
+        const p = Math.round((done / items.length) * 100);
+        return `
+          <div>
+            <div class="cat-bar-top">
+              <span>${esc(c.label)}</span>
+              <span>${done}/${items.length} (${p}%)</span>
+            </div>
+            <div class="bar-track"><div class="bar-fill" style="width:${p}%;background:${c.color}"></div></div>
+          </div>
+        `;
+      })
+      .join('');
+
+    return `
+      <div class="container">
+        <div class="section-header-row">
+          <div>
+            <h2 class="section-title">Tiến Độ Ôn Thi &amp; Kho Câu Hay Sai</h2>
+            <p class="section-sub">Dữ liệu lưu tự động trên trình duyệt của bạn.</p>
+          </div>
+          <button class="btn btn-soft-danger btn-sm" id="resetAllProgressBtn" type="button">Xóa toàn bộ tiến độ</button>
+        </div>
+
+        <div class="card result-hero">
+          <div class="score-circle" style="--pct:${pct}">
+            <div class="score-circle-inner">
+              <div class="score-num">${pct}%</div>
+              <div class="score-max">đã nắm chắc</div>
+            </div>
+          </div>
+          <div style="width:100%">
+            <h3 style="margin:0 0 8px 0;">Mức độ sẵn sàng kiểm tra 15 phút ngày mai</h3>
+            <div class="result-breakdown">
+              <div class="rb-box"><div class="rb-val">${masteredCount} / ${ALL_ITEMS.length}</div><div class="rb-lbl">Câu đã làm đúng</div></div>
+              <div class="rb-box"><div class="rb-val" style="color:var(--danger)">${wrongIds.length} câu</div><div class="rb-lbl">Câu từng làm sai</div></div>
+              <div class="rb-box"><div class="rb-val">${store.history.length} lượt</div><div class="rb-lbl">Số đề 15 phút đã thi</div></div>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              ${wrongIds.length > 0 ? `<button class="btn btn-primary btn-sm" id="statsDrillWrongBtn" type="button">🔥 Xử gọn ${wrongIds.length} câu từng sai ngay</button>` : '<span class="badge badge-green">✓ Hiện không có câu sai tồn đọng!</span>'}
+            </div>
+            <div class="cat-bars">${catBars}</div>
+          </div>
+        </div>
+
+        <div class="card" style="padding:20px;">
+          <h3 style="margin:0 0 12px 0;font-size:16.5px;">Toàn bộ lịch sử thi thử 15 phút (${store.history.length})</h3>
+          ${
+            store.history.length
+              ? `
+            <div style="overflow-x:auto;">
+              <table class="history-table">
+                <thead><tr><th>#</th><th>Đề thi</th><th>Điểm</th><th>Phần I</th><th>Phần II</th><th>Thời gian</th><th>Thời điểm</th></tr></thead>
+                <tbody>
+                  ${store.history
+                    .map(
+                      (h, idx) => `
+                    <tr>
+                      <td>${idx + 1}</td>
+                      <td><strong>${esc(h.code)}</strong> — ${esc(h.name)}</td>
+                      <td><span class="badge ${h.score >= 8.5 ? 'badge-green' : h.score >= 6.5 ? 'badge-gold' : 'badge-red'}">${h.score.toFixed(2)} / 10</span></td>
+                      <td>${h.mcRight}/12</td>
+                      <td>${h.tfRightItems}/8 ý</td>
+                      <td>${formatTime(h.elapsedSec)}</td>
+                      <td style="color:var(--text-muted)">${esc(h.dateStr)}</td>
+                    </tr>
+                  `
+                    )
+                    .join('')}
+                </tbody>
+              </table>
+            </div>
+          `
+              : '<p style="color:var(--text-muted);margin:0;">Bạn chưa hoàn thành bài thi thử 15 phút nào. Chuyển sang mục <strong>Thi thử 15p</strong> để bắt đầu nhé!</p>'
+          }
+        </div>
+      </div>
+    `;
+  }
+
+  // =========================================================================
+  // Master Render & Event Binding
+  // =========================================================================
+  function render() {
+    const main = document.getElementById('mainContent');
+    if (ui.tab === 'exam') main.innerHTML = renderExamTab();
+    else if (ui.tab === 'practice') main.innerHTML = renderPracticeTab();
+    else if (ui.tab === 'games') main.innerHTML = renderGamesTab();
+    else if (ui.tab === 'theory') main.innerHTML = renderTheoryTab();
+    else if (ui.tab === 'stats') main.innerHTML = renderStatsTab();
+    bindViewEvents();
+  }
+
+  function bindViewEvents() {
+    const main = document.getElementById('mainContent');
+
+    // Exam Hub
+    main.querySelectorAll('[data-start-exam]').forEach((btn) =>
+      btn.addEventListener('click', () => startCuratedExam(btn.dataset.startExam))
+    );
+    const randBtn = main.querySelector('#startRandomExamBtn');
+    if (randBtn) randBtn.addEventListener('click', startRandomExam);
+    const heroQuick = main.querySelector('#heroQuickExam');
+    if (heroQuick) heroQuick.addEventListener('click', () => startCuratedExam('de-01'));
+    const heroTheory = main.querySelector('#heroQuickTheory');
+    if (heroTheory) heroTheory.addEventListener('click', () => setTab('theory'));
+    const heroWrong = main.querySelector('#heroDrillWrong');
+    if (heroWrong) heroWrong.addEventListener('click', () => drillWrongIds(Object.keys(store.wrong)));
+    const goStats = main.querySelector('#goStatsBtn');
+    if (goStats) goStats.addEventListener('click', () => setTab('stats'));
+    const shufToggle = main.querySelector('#shuffleExamToggle');
+    if (shufToggle) {
+      shufToggle.addEventListener('change', (e) => {
+        ui.shuffleExam = e.target.checked;
+      });
+    }
+
+    // Active Exam Events
+    if (ui.tab === 'exam' && ui.examSession) {
+      const ses = ui.examSession;
+      main.querySelectorAll('[data-exam-mc]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          if (ses.submitted) return;
+          ses.answersMc[btn.dataset.examMc] = Number(btn.dataset.opt);
+          render();
+        });
+      });
+      main.querySelectorAll('[data-exam-tf]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          if (ses.submitted) return;
+          const tid = btn.dataset.examTf;
+          ses.answersTf[tid] = ses.answersTf[tid] || {};
+          ses.answersTf[tid][btn.dataset.key] = btn.dataset.val === 'true';
+          render();
+        });
+      });
+      main.querySelectorAll('[data-flag]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const id = btn.dataset.flag;
+          ses.flags[id] = !ses.flags[id];
+          render();
+        });
+      });
+      main.querySelectorAll('[data-jump]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const target = document.getElementById(btn.dataset.jump);
+          if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+      });
+      const pauseBtn = main.querySelector('#pauseExamBtn');
+      if (pauseBtn) {
+        pauseBtn.addEventListener('click', () => {
+          ses.paused = !ses.paused;
+          if (ses.paused && ses.timerId) {
+            clearInterval(ses.timerId);
+            ses.timerId = null;
+            toast('Đã tạm dừng đồng hồ.');
+          } else {
+            startExamTimer();
+            toast('Tiếp tục đếm giờ!');
+          }
+          render();
+        });
+      }
+      ['#submitExamBtn', '#submitExamSideBtn'].forEach((sel) => {
+        const b = main.querySelector(sel);
+        if (b) b.addEventListener('click', requestSubmitExam);
+      });
+      const cancelBtn = main.querySelector('#cancelExamBtn');
+      if (cancelBtn) {
+        cancelBtn.addEventListener('click', () => {
+          openModal('Thoát bài thi?', '<p>Bạn có chắc muốn hủy bài thi thử hiện tại để quay về chọn đề khác?</p>', [
+            { label: 'Tiếp tục làm bài', cls: 'btn-primary' },
+            {
+              label: 'Thoát đề',
+              cls: 'btn-soft-danger',
+              onClick: () => {
+                stopAllTimers();
+                ui.examSession = null;
+                render();
+              },
+            },
+          ]);
+        });
+      }
+      ['#exitExamBtn', '#exitExamBtnTop'].forEach((sel) => {
+        const b = main.querySelector(sel);
+        if (b) {
+          b.addEventListener('click', () => {
+            ui.examSession = null;
+            render();
+          });
+        }
+      });
+      const retake = main.querySelector('#retakeExamBtn');
+      if (retake) {
+        retake.addEventListener('click', () => {
+          if (ses.examId.startsWith('random-')) startRandomExam();
+          else startCuratedExam(ses.examId);
+        });
+      }
+      const toggleRev = main.querySelector('#toggleReviewWrongBtn');
+      if (toggleRev) {
+        toggleRev.addEventListener('click', () => {
+          ses.reviewFilter = ses.reviewFilter === 'wrong' ? 'all' : 'wrong';
+          render();
+        });
+      }
+      const drillBtn = main.querySelector('#drillExamWrongBtn');
+      if (drillBtn && ses.result) {
+        drillBtn.addEventListener('click', () => drillWrongIds(ses.result.wrongIds));
+      }
+    }
+
+    // Practice Tab Events
+    if (ui.tab === 'practice') {
+      const p = ui.practice;
+      main.querySelectorAll('[data-prac-mode]').forEach((b) =>
+        b.addEventListener('click', () => {
+          p.mode = b.dataset.pracMode;
+          render();
+        })
+      );
+      main.querySelectorAll('[data-f-cat]').forEach((b) =>
+        b.addEventListener('click', () => {
+          p.cat = b.dataset.fCat;
+          p.focusIdx = 0;
+          render();
+        })
+      );
+      main.querySelectorAll('[data-f-kind]').forEach((b) =>
+        b.addEventListener('click', () => {
+          p.kind = b.dataset.fKind;
+          if (p.kind === 'all') {
+            p.onlyTrap = false;
+            p.onlyWrong = false;
+          }
+          p.focusIdx = 0;
+          render();
+        })
+      );
+      const fTrap = main.querySelector('#filterTrapBtn');
+      if (fTrap) {
+        fTrap.addEventListener('click', () => {
+          p.onlyTrap = !p.onlyTrap;
+          if (p.onlyTrap) p.kind = 'mc';
+          p.focusIdx = 0;
+          render();
+        });
+      }
+      const fWrong = main.querySelector('#filterWrongBtn');
+      if (fWrong) {
+        fWrong.addEventListener('click', () => {
+          p.onlyWrong = !p.onlyWrong;
+          p.focusIdx = 0;
+          render();
+        });
+      }
+      const searchIn = main.querySelector('#pracSearchInput');
+      if (searchIn) {
+        searchIn.addEventListener('input', (e) => {
+          p.query = e.target.value;
+          p.focusIdx = 0;
+          render();
+          const refreshed = document.getElementById('pracSearchInput');
+          if (refreshed) {
+            refreshed.focus();
+            refreshed.setSelectionRange(refreshed.value.length, refreshed.value.length);
+          }
+        });
+      }
+      const shufBtn = main.querySelector('#pracShuffleBtn');
+      if (shufBtn) {
+        shufBtn.addEventListener('click', () => {
+          p.order = shuffleArr(p.order);
+          p.focusIdx = 0;
+          toast('Đã trộn thứ tự kho 60 câu!');
+          render();
+        });
+      }
+      const clearBtn = main.querySelector('#clearFiltersBtn');
+      if (clearBtn) {
+        clearBtn.addEventListener('click', () => {
+          p.cat = 'all';
+          p.kind = 'all';
+          p.onlyTrap = false;
+          p.onlyWrong = false;
+          p.query = '';
+          p.focusIdx = 0;
+          render();
+        });
+      }
+      const prevBtn = main.querySelector('#pracPrevBtn');
+      if (prevBtn) prevBtn.addEventListener('click', () => { p.focusIdx = Math.max(0, p.focusIdx - 1); render(); });
+      const nextBtn = main.querySelector('#pracNextBtn');
+      if (nextBtn) nextBtn.addEventListener('click', () => { p.focusIdx += 1; render(); });
+
+      main.querySelectorAll('[data-prac-mc]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const qid = btn.dataset.pracMc;
+          const opt = Number(btn.dataset.opt);
+          p.answersMc[qid] = opt;
+          const q = MC_MAP[qid];
+          if (opt === q.answer) {
+            store.mastered[qid] = true;
+            delete store.wrong[qid];
+          } else {
+            store.wrong[qid] = true;
+          }
+          saveStore();
+          render();
+        });
+      });
+      main.querySelectorAll('[data-prac-reset]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          delete p.answersMc[btn.dataset.pracReset];
+          render();
+        });
+      });
+      main.querySelectorAll('[data-prac-tf]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const tid = btn.dataset.pracTf;
+          p.answersTf[tid] = p.answersTf[tid] || {};
+          p.answersTf[tid][btn.dataset.key] = btn.dataset.val === 'true';
+          render();
+        });
+      });
+      main.querySelectorAll('[data-prac-check-tf]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const tid = btn.dataset.pracCheckTf;
+          p.checkedTf[tid] = true;
+          const t = TF_MAP[tid];
+          const ans = p.answersTf[tid] || {};
+          const right = t.statements.filter((s) => ans[s.key] === s.answer).length;
+          if (right === 4) {
+            store.mastered[tid] = true;
+            delete store.wrong[tid];
+          } else {
+            store.wrong[tid] = true;
+          }
+          saveStore();
+          render();
+        });
+      });
+      main.querySelectorAll('[data-prac-reset-tf]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const tid = btn.dataset.pracResetTf;
+          delete p.answersTf[tid];
+          delete p.checkedTf[tid];
+          render();
+        });
+      });
+    }
+
+    // Games Tab Events
+    if (ui.tab === 'games') {
+      const g = ui.games;
+      main.querySelectorAll('[data-game-sub]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          if (g.matchTimerId && btn.dataset.gameSub !== 'match') {
+            clearInterval(g.matchTimerId);
+            g.matchTimerId = null;
+          }
+          g.sub = btn.dataset.gameSub;
+          if (g.sub === 'match' && (!g.matchPairs.length || g.matchDone)) initMatchGame(g.matchRound);
+          if (g.sub === 'chrono' && !g.chronoItems.length) initChronoGame();
+          render();
+        });
+      });
+
+      // Flashcards
+      main.querySelectorAll('[data-fc-cat]').forEach((b) =>
+        b.addEventListener('click', () => {
+          g.fcCat = b.dataset.fcCat;
+          g.fcIdx = 0;
+          g.fcFlipped = false;
+          render();
+        })
+      );
+      const flipBox = main.querySelector('#fcFlipBox');
+      if (flipBox) {
+        flipBox.addEventListener('click', () => {
+          g.fcFlipped = !g.fcFlipped;
+          flipBox.classList.toggle('flipped', g.fcFlipped);
+        });
+      }
+      const fcList = g.fcOrder
+        .map((id) => DB.flashcards.find((f) => f.id === id))
+        .filter((f) => f && (g.fcCat === 'all' || f.cat === g.fcCat));
+      const curFc = fcList[g.fcIdx];
+
+      const fcPrev = main.querySelector('#fcPrevBtn');
+      if (fcPrev) fcPrev.addEventListener('click', () => { g.fcIdx = (g.fcIdx - 1 + fcList.length) % fcList.length; g.fcFlipped = false; render(); });
+      const fcNext = main.querySelector('#fcNextBtn');
+      if (fcNext) fcNext.addEventListener('click', () => { g.fcIdx = (g.fcIdx + 1) % fcList.length; g.fcFlipped = false; render(); });
+      const fcMaster = main.querySelector('#fcMasterBtn');
+      if (fcMaster && curFc) {
+        fcMaster.addEventListener('click', () => {
+          store.fcMastered[curFc.id] = true;
+          saveStore();
+          g.fcIdx = (g.fcIdx + 1) % fcList.length;
+          g.fcFlipped = false;
+          toast('✓ Đã đánh dấu thuộc thẻ!');
+          render();
+        });
+      }
+      const fcReview = main.querySelector('#fcNeedReviewBtn');
+      if (fcReview && curFc) {
+        fcReview.addEventListener('click', () => {
+          delete store.fcMastered[curFc.id];
+          saveStore();
+          g.fcIdx = (g.fcIdx + 1) % fcList.length;
+          g.fcFlipped = false;
+          render();
+        });
+      }
+      const fcShuf = main.querySelector('#fcShuffleBtn');
+      if (fcShuf) {
+        fcShuf.addEventListener('click', () => {
+          g.fcOrder = shuffleArr(g.fcOrder);
+          g.fcIdx = 0;
+          g.fcFlipped = false;
+          toast('Đã trộn 24 thẻ Flashcard!');
+          render();
+        });
+      }
+
+      // Match Game
+      const checkMatch = () => {
+        if (!g.matchSelLeft || !g.matchSelRight) return;
+        if (g.matchSelLeft === g.matchSelRight) {
+          g.matchMatchedIds[g.matchSelLeft] = true;
+          g.matchSelLeft = null;
+          g.matchSelRight = null;
+          if (Object.keys(g.matchMatchedIds).length === g.matchPairs.length) {
+            g.matchDone = true;
+            if (g.matchTimerId) {
+              clearInterval(g.matchTimerId);
+              g.matchTimerId = null;
+            }
+            if (store.bestMatchSec === null || g.matchElapsed < store.bestMatchSec) {
+              store.bestMatchSec = g.matchElapsed;
+              saveStore();
+              toast(`🏆 Kỷ lục mới: ${g.matchElapsed} giây!`);
+            }
+          }
+          render();
+        } else {
+          g.matchMistakes += 1;
+          g.matchWrongPair = { l: g.matchSelLeft, r: g.matchSelRight };
+          g.matchSelLeft = null;
+          g.matchSelRight = null;
+          render();
+          setTimeout(() => {
+            g.matchWrongPair = null;
+            if (ui.tab === 'games' && ui.games.sub === 'match') render();
+          }, 420);
+        }
+      };
+
+      main.querySelectorAll('[data-match-l]').forEach((b) =>
+        b.addEventListener('click', () => {
+          g.matchSelLeft = b.dataset.matchL;
+          if (g.matchSelRight) checkMatch();
+          else render();
+        })
+      );
+      main.querySelectorAll('[data-match-r]').forEach((b) =>
+        b.addEventListener('click', () => {
+          g.matchSelRight = b.dataset.matchR;
+          if (g.matchSelLeft) checkMatch();
+          else render();
+        })
+      );
+      ['#matchNewRoundBtn', '#matchNextSetBtn'].forEach((sel) => {
+        const b = main.querySelector(sel);
+        if (b) {
+          b.addEventListener('click', () => {
+            initMatchGame(g.matchRound + 1);
+            render();
+          });
+        }
+      });
+
+      // Chrono Game
+      main.querySelectorAll('[data-chrono-pick]').forEach((b) =>
+        b.addEventListener('click', () => {
+          const item = g.chronoPool.find((x) => x.id === b.dataset.chronoPick);
+          if (item && g.chronoPicked.length < 5) {
+            g.chronoPicked.push(item);
+            render();
+          }
+        })
+      );
+      main.querySelectorAll('[data-chrono-remove]').forEach((b) =>
+        b.addEventListener('click', () => {
+          g.chronoPicked = g.chronoPicked.filter((x) => x.id !== b.dataset.chronoRemove);
+          render();
+        })
+      );
+      const chCheck = main.querySelector('#chronoCheckBtn');
+      if (chCheck) {
+        chCheck.addEventListener('click', () => {
+          g.chronoChecked = true;
+          render();
+        });
+      }
+      const chNew = main.querySelector('#chronoNewBtn');
+      if (chNew) {
+        chNew.addEventListener('click', () => {
+          initChronoGame();
+          render();
+        });
+      }
+    }
+
+    // Theory Tab Events
+    if (ui.tab === 'theory') {
+      main.querySelectorAll('[data-tl-idx]').forEach((b) =>
+        b.addEventListener('click', () => {
+          ui.theory.activeTlIdx = Number(b.dataset.tlIdx);
+          render();
+        })
+      );
+      const hideToggle = main.querySelector('#hideTrapsToggle');
+      if (hideToggle) {
+        hideToggle.addEventListener('change', (e) => {
+          ui.theory.hideTraps = e.target.checked;
+          ui.theory.revealedTraps = {};
+          render();
+        });
+      }
+      main.querySelectorAll('[data-reveal-trap]').forEach((el) => {
+        el.addEventListener('click', () => {
+          if (!ui.theory.hideTraps) return;
+          ui.theory.revealedTraps[el.dataset.revealTrap] = true;
+          render();
+        });
+      });
+    }
+
+    // Stats Tab Events
+    if (ui.tab === 'stats') {
+      const drill = main.querySelector('#statsDrillWrongBtn');
+      if (drill) drill.addEventListener('click', () => drillWrongIds(Object.keys(store.wrong)));
+      const reset = main.querySelector('#resetAllProgressBtn');
+      if (reset) {
+        reset.addEventListener('click', () => {
+          openModal(
+            'Xóa toàn bộ tiến độ?',
+            '<p>Hành động này sẽ xóa lịch sử thi thử, danh sách câu đã nắm chắc, câu hay sai và thẻ Flashcard đã thuộc.</p>',
+            [
+              { label: 'Hủy' },
+              {
+                label: 'Xóa sạch',
+                cls: 'btn-soft-danger',
+                onClick: () => {
+                  store.mastered = {};
+                  store.wrong = {};
+                  store.fcMastered = {};
+                  store.history = [];
+                  store.bestMatchSec = null;
+                  saveStore();
+                  toast('Đã đặt lại toàn bộ tiến độ.');
+                  render();
+                },
+              },
+            ]
+          );
+        });
+      }
+    }
+  }
+
+  // =========================================================================
+  // Keyboard Shortcuts (Focus Practice & Flashcards)
+  // =========================================================================
+  document.addEventListener('keydown', (e) => {
+    const tag = (e.target && e.target.tagName) || '';
+    if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+    if (!document.getElementById('modalBackdrop').hidden) {
+      if (e.key === 'Escape') closeModal();
       return;
     }
 
-    const tabsHTML = MINDMAPS.map((item, idx) => {
-      const metrics = countMindMapMetrics(item);
-      const isActive = item.id === mm.id;
-      const cleanName = item.shortTitle.replace(/^Bài\s+\d+:\s*/i, '');
-      return `
-        <button
-          type="button"
-          class="mm-lesson-pill ${isActive ? 'active' : ''}"
-          data-mm-lesson="${item.id}"
-          style="--mm-accent:${escapeHTML(item.accent)}; --mm-accent-soft:${escapeHTML(item.accentSoft)};"
-        >
-          <span class="mm-pill-num">Bài ${idx + 1}</span>
-          <span class="mm-pill-name">${escapeHTML(cleanName)}</span>
-          <span class="mm-pill-meta">${metrics.branches} nhánh • ${metrics.items} ý</span>
-        </button>
-      `;
-    }).join('');
-
-    dom.mainContent.innerHTML = `
-      <div class="container">
-        <div class="mm-page-header">
-          <div>
-            <h1>Sơ đồ tư duy Lịch sử 12 — Trọn bộ 5 bài</h1>
-            <p class="section-sub">${escapeHTML(mm.subtitle)} • Tổng hợp 100% ý chính, mốc thời gian, tổ chức &amp; lưu ý bẫy trắc nghiệm</p>
-          </div>
-          <div class="mm-header-actions">
-            <button type="button" class="btn btn-sm btn-soft" id="mmPracticeLessonBtn">Ôn câu hỏi ${escapeHTML(mm.shortTitle.split(':')[0])}</button>
-            <button type="button" class="btn btn-sm btn-primary" id="mmExamLessonBtn">Thi thử ${escapeHTML(mm.shortTitle.split(':')[0])}</button>
-          </div>
-        </div>
-
-        <div class="mm-lesson-tabs" role="tablist" aria-label="Chọn bài học sơ đồ tư duy">
-          ${tabsHTML}
-        </div>
-
-        <div class="mm-toolbar">
-          <div class="mm-search-wrap">
-            <input
-              type="search"
-              class="search-input"
-              id="mmSearchInput"
-              placeholder="Lọc ý, năm, từ khóa trong ${escapeHTML(mm.shortTitle.split(':')[0])} (vd: 1945, I-an-ta, ASEAN, Biển Đông)..."
-              value="${escapeHTML(state.mindmap.query)}"
-            />
-            <button type="button" class="mm-search-clear" id="mmClearSearchBtn" title="Xóa tìm kiếm" aria-label="Xóa tìm kiếm" ${state.mindmap.query.trim() ? '' : 'hidden'}>×</button>
-          </div>
-
-          <div class="mm-tool-group">
-            <div class="mm-layout-seg" role="group" aria-label="Kiểu hiển thị sơ đồ">
-              <button type="button" class="mm-layout-btn ${state.mindmap.layout === 'tree' ? 'active' : ''}" id="mmLayoutTreeBtn">Nhánh ngang</button>
-              <button type="button" class="mm-layout-btn ${state.mindmap.layout === 'vertical' ? 'active' : ''}" id="mmLayoutVertBtn">Cây dọc</button>
-            </div>
-            <button type="button" class="btn btn-sm btn-outline" id="mmExpandAllBtn">Mở hết</button>
-            <button type="button" class="btn btn-sm btn-outline" id="mmCollapseAllBtn">Thu gọn</button>
-          </div>
-        </div>
-
-        <div class="mm-status-line" id="mmStatusLine"></div>
-        <div id="mmCanvasRegion"></div>
-      </div>
-    `;
-
-    renderMindMapCanvasOnly();
-
-    // Lesson tab switch
-    dom.mainContent.querySelectorAll('[data-mm-lesson]').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        if (state.mindmap.lessonId === btn.dataset.mmLesson) return;
-        state.mindmap.lessonId = btn.dataset.mmLesson;
-        renderMindMap();
-      });
-    });
-
-    // Quick practice / exam for current mind map lesson
-    const practiceBtn = document.getElementById('mmPracticeLessonBtn');
-    if (practiceBtn) {
-      practiceBtn.addEventListener('click', () => {
-        const l = DB.lessons.find((x) => x.id === state.mindmap.lessonId);
-        if (!l) return;
-        const qs = buildQuestionsFromFilter({ lessonIds: [l.id], typeFilter: 'all', shuffleQuestions: false });
-        createSession({
-          title: `Ôn tập • ${l.shortTitle}`,
-          mode: 'practice',
-          questions: qs,
-          autoCheckPractice: true
-        });
-      });
-    }
-
-    const examBtn = document.getElementById('mmExamLessonBtn');
-    if (examBtn) {
-      examBtn.addEventListener('click', () => {
-        const l = DB.lessons.find((x) => x.id === state.mindmap.lessonId);
-        if (!l) return;
-        const qs = buildQuestionsFromFilter({ lessonIds: [l.id], typeFilter: 'all', shuffleQuestions: false });
-        createSession({
-          title: `Thi thử • ${l.shortTitle}`,
-          mode: 'exam',
-          questions: qs,
-          durationMin: 35
-        });
-      });
-    }
-
-    // Live search input (stays mounted so mobile keyboard stays open)
-    const searchInput = document.getElementById('mmSearchInput');
-    let mmSearchDebounce = null;
-    if (searchInput) {
-      searchInput.addEventListener('input', () => {
-        clearTimeout(mmSearchDebounce);
-        mmSearchDebounce = setTimeout(() => {
-          state.mindmap.query = searchInput.value;
-          renderMindMapCanvasOnly();
-        }, 120);
-      });
-    }
-
-    const clearBtn = document.getElementById('mmClearSearchBtn');
-    if (clearBtn) {
-      clearBtn.addEventListener('click', () => {
-        state.mindmap.query = '';
-        if (searchInput) {
-          searchInput.value = '';
-          searchInput.focus();
-        }
-        renderMindMapCanvasOnly();
-      });
-    }
-
-    // Layout toggles
-    const treeBtn = document.getElementById('mmLayoutTreeBtn');
-    if (treeBtn) {
-      treeBtn.addEventListener('click', () => {
-        state.mindmap.layout = 'tree';
-        renderMindMapCanvasOnly();
-      });
-    }
-    const vertBtn = document.getElementById('mmLayoutVertBtn');
-    if (vertBtn) {
-      vertBtn.addEventListener('click', () => {
-        state.mindmap.layout = 'vertical';
-        renderMindMapCanvasOnly();
-      });
-    }
-
-    // Expand / Collapse all branches in current lesson
-    const expandAllBtn = document.getElementById('mmExpandAllBtn');
-    if (expandAllBtn) {
-      expandAllBtn.addEventListener('click', () => {
-        mm.branches.forEach((b) => {
-          state.mindmap.collapsed[b.id] = false;
-        });
-        renderMindMapCanvasOnly();
-      });
-    }
-    const collapseAllBtn = document.getElementById('mmCollapseAllBtn');
-    if (collapseAllBtn) {
-      collapseAllBtn.addEventListener('click', () => {
-        mm.branches.forEach((b) => {
-          state.mindmap.collapsed[b.id] = true;
-        });
-        renderMindMapCanvasOnly();
-      });
-    }
-
-    // Delegated branch toggle & empty-clear actions inside canvas
-    const canvasRegion = document.getElementById('mmCanvasRegion');
-    if (canvasRegion) {
-      canvasRegion.addEventListener('click', (e) => {
-        const toggleBtn = e.target.closest('[data-mm-toggle]');
-        if (toggleBtn) {
-          const bid = toggleBtn.dataset.mmToggle;
-          state.mindmap.collapsed[bid] = !state.mindmap.collapsed[bid];
-          renderMindMapCanvasOnly();
-          return;
-        }
-        const clearEmpty = e.target.closest('[data-mm-clear]');
-        if (clearEmpty) {
-          state.mindmap.query = '';
-          if (searchInput) searchInput.value = '';
-          renderMindMapCanvasOnly();
-        }
-      });
-    }
-  }
-
-  /* ------------------------------------------------------------------------
-     Main Render Dispatcher & Global Listeners
-     ------------------------------------------------------------------------ */
-  function render() {
-    if (state.view === 'home') renderHome(false);
-    else if (state.view === 'practice-setup') renderHome(true);
-    else if (state.view === 'mindmap') renderMindMap();
-    else if (state.view === 'workspace') renderWorkspace();
-    else if (state.view === 'results') renderResults();
-    else if (state.view === 'bank') renderBank();
-  }
-
-  function init() {
-    applyTheme(store.theme);
-
-    dom.themeToggle.addEventListener('click', () => {
-      applyTheme(store.theme === 'dark' ? 'light' : 'dark');
-    });
-
-    dom.brandBtn.addEventListener('click', () => confirmLeaveWorkspace('home'));
-    dom.brandBtn.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') {
+    if (ui.tab === 'games' && ui.games.sub === 'flashcard') {
+      if (e.code === 'Space') {
         e.preventDefault();
-        confirmLeaveWorkspace('home');
+        ui.games.fcFlipped = !ui.games.fcFlipped;
+        const box = document.getElementById('fcFlipBox');
+        if (box) box.classList.toggle('flipped', ui.games.fcFlipped);
+      } else if (e.key === 'ArrowRight') {
+        const b = document.getElementById('fcNextBtn');
+        if (b) b.click();
+      } else if (e.key === 'ArrowLeft') {
+        const b = document.getElementById('fcPrevBtn');
+        if (b) b.click();
       }
-    });
-
-    dom.mainNav.querySelectorAll('.nav-tab').forEach((tab) => {
-      tab.addEventListener('click', () => {
-        confirmLeaveWorkspace(tab.dataset.view);
-      });
-    });
-
-    dom.modalCloseBtn.addEventListener('click', closeModal);
-    dom.modalBackdrop.addEventListener('click', (e) => {
-      if (e.target === dom.modalBackdrop) closeModal();
-    });
-
-    dom.sheetCloseBtn.addEventListener('click', closeSheet);
-    dom.sheetBackdrop.addEventListener('click', (e) => {
-      if (e.target === dom.sheetBackdrop) closeSheet();
-    });
-
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') {
-        closeModal();
-        closeSheet();
-        return;
+    } else if (ui.tab === 'practice' && ui.practice.mode === 'focus') {
+      if (e.key === 'ArrowRight') {
+        const b = document.getElementById('pracNextBtn');
+        if (b && !b.disabled) b.click();
+      } else if (e.key === 'ArrowLeft') {
+        const b = document.getElementById('pracPrevBtn');
+        if (b && !b.disabled) b.click();
+      } else if (['1', '2', '3', '4', 'a', 'b', 'c', 'd', 'A', 'B', 'C', 'D'].includes(e.key)) {
+        const idxMap = { '1': 0, '2': 1, '3': 2, '4': 3, a: 0, b: 1, c: 2, d: 3 };
+        const idx = idxMap[e.key.toLowerCase()];
+        const btn = document.querySelector(`[data-prac-mc][data-opt="${idx}"]:not(:disabled)`);
+        if (btn) btn.click();
       }
-      if (state.view === 'workspace' && state.session && !state.session.submitted) {
-        const s = state.session;
-        if (s.viewLayout === 'focus') {
-          if (e.key === 'ArrowRight') {
-            if (s.focusIndex < s.questions.length - 1) {
-              s.focusIndex += 1;
-              renderWorkspace();
-            }
-          } else if (e.key === 'ArrowLeft') {
-            if (s.focusIndex > 0) {
-              s.focusIndex -= 1;
-              renderWorkspace();
-            }
-          }
-        }
-      }
-    });
+    }
+  });
 
-    window.addEventListener('beforeunload', (e) => {
-      if (state.view === 'workspace' && state.session && state.session.mode === 'exam' && !state.session.submitted) {
-        e.preventDefault();
-        e.returnValue = '';
-      }
-    });
+  // =========================================================================
+  // Boot
+  // =========================================================================
+  applyTheme();
+  document.getElementById('themeToggle').addEventListener('click', () => {
+    store.theme = store.theme === 'light' ? 'dark' : 'light';
+    saveStore();
+    applyTheme();
+  });
+  document.getElementById('brandBtn').addEventListener('click', () => setTab('exam'));
+  document.querySelectorAll('.nav-tab').forEach((btn) =>
+    btn.addEventListener('click', () => setTab(btn.dataset.tab))
+  );
+  document.getElementById('modalCloseBtn').addEventListener('click', closeModal);
+  document.getElementById('modalBackdrop').addEventListener('click', (e) => {
+    if (e.target.id === 'modalBackdrop') closeModal();
+  });
 
-    render();
-  }
-
-  init();
+  syncNavAndRender();
 })();

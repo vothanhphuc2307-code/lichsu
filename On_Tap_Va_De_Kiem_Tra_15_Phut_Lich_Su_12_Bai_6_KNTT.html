@@ -1,0 +1,1794 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<title>Ôn tập &amp; Đề Kiểm Tra 15 Phút Lịch Sử 12 (KNTT) — Bài 6: Cách mạng tháng Tám năm 1945</title>
+<style>
+  @page {
+    size: A4 portrait;
+    margin: 10.5mm 12.5mm 13mm 12.5mm;
+    @top-left { content: none; }
+    @top-center { content: none; }
+    @top-right { content: none; }
+    @bottom-left {
+      content: "Lịch sử 12 (KNTT) • Bài 6: Cách mạng tháng Tám năm 1945";
+      font-family: "Segoe UI", Arial, sans-serif;
+      font-size: 7.5pt;
+      color: #6b7280;
+    }
+    @bottom-right {
+      content: "Trang " counter(page) " / " counter(pages);
+      font-family: "Segoe UI", Arial, sans-serif;
+      font-size: 7.5pt;
+      font-weight: 600;
+      color: #4b5563;
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Segoe UI", Arial, sans-serif;
+    font-size: 9.4pt;
+    line-height: 1.44;
+    color: #1f2937;
+    background: #ffffff;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .page-break { page-break-before: always; break-before: page; }
+
+  /* Hero Cover Strip */
+  .hero {
+    background: linear-gradient(135deg, #7f1d1d 0%, #991b1b 55%, #b45309 100%);
+    color: #ffffff;
+    padding: 16px 20px;
+    border-radius: 10px;
+    margin-bottom: 12px;
+    position: relative;
+  }
+  .hero-kicker {
+    font-size: 8pt;
+    letter-spacing: 0.9px;
+    text-transform: uppercase;
+    color: #fde68a;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .hero-title {
+    font-family: "Times New Roman", Cambria, serif;
+    font-size: 18.5pt;
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: 5px;
+  }
+  .hero-sub {
+    font-size: 9.2pt;
+    color: #fef3c7;
+  }
+  .hero-pills {
+    margin-top: 9px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .hero-pill {
+    background: rgba(255,255,255,0.16);
+    border: 1px solid rgba(255,255,255,0.28);
+    color: #fff;
+    padding: 2.5px 9px;
+    border-radius: 99px;
+    font-size: 8pt;
+    font-weight: 600;
+  }
+
+  /* Section Banners */
+  .section-banner {
+    padding: 7px 12px;
+    border-radius: 7px;
+    font-size: 10pt;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    margin: 12px 0 8px 0;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+  .red-banner { background: #fef2f2; color: #991b1b; border-left: 4px solid #b91c1c; }
+  .amber-banner { background: #fffbeb; color: #92400e; border-left: 4px solid #d97706; }
+  .navy-banner { background: #eff6ff; color: #1e3a8a; border-left: 4px solid #1d4ed8; }
+  .green-banner { background: #ecfdf5; color: #065f46; border-left: 4px solid #059669; }
+
+  /* SVG Card */
+  .svg-card {
+    border: 1px solid #fed7aa;
+    border-radius: 9px;
+    padding: 8px 10px 6px 10px;
+    background: #fffaf7;
+    margin-bottom: 11px;
+    break-inside: avoid;
+  }
+  .svg-caption {
+    font-size: 8.2pt;
+    font-weight: 700;
+    color: #9a3412;
+    text-align: center;
+    margin-bottom: 5px;
+    letter-spacing: 0.3px;
+  }
+
+  /* Theory Sections */
+  .theory-sec {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 9px;
+    background: #ffffff;
+  }
+  .sec-head {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    border-bottom: 1.5px solid #fee2e2;
+    padding-bottom: 6px;
+    margin-bottom: 7px;
+    break-after: avoid;
+  }
+  .sec-num {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #991b1b;
+    color: #fff;
+    font-weight: 700;
+    font-size: 10.5pt;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .sec-title {
+    font-size: 10.6pt;
+    font-weight: 700;
+    color: #7f1d1d;
+  }
+  .sec-sub {
+    font-size: 8.2pt;
+    color: #6b7280;
+  }
+  .theory-block {
+    margin-bottom: 6px;
+    break-inside: avoid;
+  }
+  .theory-block:last-child { margin-bottom: 0; }
+  .theory-subhead {
+    font-weight: 700;
+    font-size: 9.2pt;
+    color: #111827;
+    margin-bottom: 2.5px;
+  }
+  .theory-list {
+    padding-left: 16px;
+  }
+  .theory-list li {
+    margin-bottom: 2.5px;
+    text-align: justify;
+  }
+
+  /* Comparison Table */
+  .compare-box {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 8px 10px;
+    background: #fafafa;
+    margin: 9px 0;
+    break-inside: avoid;
+  }
+  .box-title {
+    font-size: 8.6pt;
+    font-weight: 700;
+    color: #991b1b;
+    margin-bottom: 6px;
+  }
+  .std-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 8.6pt;
+  }
+  .std-table th {
+    background: #991b1b;
+    color: #fff;
+    text-align: left;
+    padding: 5px 7px;
+    font-weight: 700;
+  }
+  .std-table td {
+    border: 1px solid #e5e7eb;
+    padding: 5px 7px;
+    vertical-align: top;
+    background: #fff;
+  }
+  .pill {
+    display: inline-block;
+    padding: 1.5px 6px;
+    border-radius: 4px;
+    font-size: 7.5pt;
+    font-weight: 700;
+  }
+  .pill.red { background: #fee2e2; color: #991b1b; }
+  .pill.amber { background: #fef3c7; color: #92400e; }
+  .pill.green { background: #d1fae5; color: #065f46; }
+
+  /* Traps Grid */
+  .traps-wrap {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 7px;
+  }
+  .trap-card {
+    border: 1px solid #fde68a;
+    border-radius: 7px;
+    padding: 6.5px 8px;
+    background: #fffdf7;
+    break-inside: avoid;
+    font-size: 8.3pt;
+  }
+  .trap-hdr {
+    font-weight: 700;
+    color: #78350f;
+    margin-bottom: 4px;
+    font-size: 8.6pt;
+  }
+  .trap-num {
+    display: inline-block;
+    background: #d97706;
+    color: #fff;
+    border-radius: 4px;
+    padding: 0.5px 5px;
+    font-size: 7.4pt;
+    margin-right: 3px;
+  }
+  .trap-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    margin-bottom: 3.5px;
+  }
+  .trap-bad {
+    background: #fef2f2;
+    color: #991b1b;
+    padding: 3px 6px;
+    border-radius: 4px;
+    border-left: 2.5px solid #dc2626;
+  }
+  .trap-good {
+    background: #ecfdf5;
+    color: #065f46;
+    padding: 3px 6px;
+    border-radius: 4px;
+    border-left: 2.5px solid #059669;
+  }
+  .trap-why {
+    color: #4b5563;
+    font-size: 7.9pt;
+    line-height: 1.35;
+  }
+
+  /* Sources */
+  .source-card {
+    border: 1px solid #bfdbfe;
+    border-radius: 7px;
+    padding: 7px 10px;
+    background: #f8fbff;
+    margin-bottom: 7px;
+    break-inside: avoid;
+  }
+  .source-title {
+    font-weight: 700;
+    font-size: 8.9pt;
+    color: #1e3a8a;
+    margin-bottom: 3px;
+  }
+  .source-meta {
+    font-weight: 400;
+    color: #4b5563;
+    font-size: 8.1pt;
+  }
+  .source-quote {
+    font-family: "Times New Roman", Cambria, serif;
+    font-style: italic;
+    font-size: 9.4pt;
+    line-height: 1.42;
+    color: #111827;
+    border-left: 3px solid #2563eb;
+    padding-left: 9px;
+    margin: 4px 0;
+  }
+  .source-take {
+    font-size: 8.2pt;
+    color: #1f2937;
+  }
+
+  /* Exam Paper Styling — tuned so each 15-min exam fits cleanly on exactly 2 A4 pages (1 double-sided sheet!) */
+  .exam-header {
+    border: 1.5px solid #1f2937;
+    border-radius: 6px;
+    padding: 7px 11px;
+    margin-bottom: 7px;
+    background: #fafafa;
+    break-inside: avoid;
+  }
+  .exam-top-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-bottom: 1px dashed #9ca3af;
+    padding-bottom: 4px;
+    margin-bottom: 4.5px;
+  }
+  .exam-school { font-size: 8pt; font-weight: 700; color: #4b5563; }
+  .exam-subj { font-size: 10.5pt; font-weight: 800; color: #991b1b; }
+  .exam-lesson { font-size: 8.4pt; font-weight: 600; color: #111827; }
+  .exam-right { text-align: right; }
+  .exam-code {
+    display: inline-block;
+    background: #991b1b;
+    color: #fff;
+    font-weight: 800;
+    font-size: 9.4pt;
+    padding: 1.5px 9px;
+    border-radius: 5px;
+    margin-bottom: 2px;
+  }
+  .exam-time { font-size: 8.4pt; font-weight: 700; color: #111827; }
+  .exam-note { font-size: 7.4pt; font-style: italic; color: #6b7280; }
+  .student-bar {
+    display: flex;
+    justify-content: space-between;
+    font-size: 8.4pt;
+    font-weight: 600;
+    color: #111827;
+  }
+  .part-hdr {
+    font-size: 9.1pt;
+    font-weight: 800;
+    color: #991b1b;
+    border-bottom: 1.5px solid #991b1b;
+    padding-bottom: 1.5px;
+    margin-bottom: 2px;
+    break-after: avoid;
+  }
+  .part-hdr span { font-weight: 600; font-size: 8.1pt; color: #4b5563; }
+  .part-guide {
+    font-size: 7.7pt;
+    font-style: italic;
+    color: #4b5563;
+    margin-bottom: 5px;
+    break-after: avoid;
+  }
+  .q-block {
+    margin-bottom: 4.2px;
+    break-inside: avoid;
+  }
+  .q-stem {
+    font-size: 8.55pt;
+    line-height: 1.33;
+    color: #111827;
+    margin-bottom: 1.8px;
+    text-align: justify;
+  }
+  .opt-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5px 12px;
+    padding-left: 8px;
+  }
+  .opt-grid-1 {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    padding-left: 8px;
+  }
+  .opt-item {
+    font-size: 8.35pt;
+    line-height: 1.3;
+    display: flex;
+    gap: 4px;
+    align-items: baseline;
+  }
+  .opt-lbl { font-weight: 700; color: #7f1d1d; flex-shrink: 0; }
+
+  .tf-block {
+    margin-bottom: 6px;
+    break-inside: avoid;
+  }
+  .tf-passage {
+    background: #f9fafb;
+    border: 1px solid #d1d5db;
+    border-left: 3px solid #991b1b;
+    border-radius: 5px;
+    padding: 4.5px 8px;
+    font-family: "Times New Roman", Cambria, serif;
+    font-size: 8.9pt;
+    line-height: 1.32;
+    font-style: italic;
+    margin: 3px 0 4px 0;
+    text-align: justify;
+  }
+  .tf-src {
+    text-align: right;
+    font-family: "Segoe UI", Arial, sans-serif;
+    font-size: 7.4pt;
+    font-style: normal;
+    color: #4b5563;
+    margin-top: 2px;
+  }
+  .tf-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 8.35pt;
+    line-height: 1.3;
+  }
+  .tf-table td {
+    border: 1px solid #e5e7eb;
+    padding: 3px 5.5px;
+    vertical-align: top;
+  }
+  .tf-key { width: 25px; text-align: center; color: #7f1d1d; background: #fef2f2; }
+  .tf-box { width: 70px; text-align: center; white-space: nowrap; font-weight: 600; color: #374151; background: #fafafa; }
+  .exam-end {
+    text-align: center;
+    font-weight: 700;
+    font-size: 8.3pt;
+    letter-spacing: 1px;
+    color: #4b5563;
+    margin-top: 5px;
+  }
+
+  /* Solutions — tuned so each exam's solutions fit cleanly on exactly 2 A4 pages */
+  .sol-exam-block { margin-bottom: 6px; }
+  .key-card {
+    border: 1px solid #a7f3d0;
+    background: #f0fdf4;
+    border-radius: 7px;
+    padding: 5px 8px;
+    margin-bottom: 6px;
+    break-inside: avoid;
+  }
+  .key-label {
+    font-size: 8pt;
+    font-weight: 800;
+    color: #065f46;
+    margin-bottom: 3px;
+  }
+  .key-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 8.1pt;
+    text-align: center;
+    background: #fff;
+  }
+  .key-table th {
+    background: #047857;
+    color: #fff;
+    padding: 2.5px 4px;
+    border: 1px solid #047857;
+  }
+  .key-table td {
+    padding: 2.5px 4px;
+    border: 1px solid #a7f3d0;
+    color: #065f46;
+  }
+  .key-tf-row {
+    margin-top: 4px;
+    font-size: 8pt;
+    color: #064e3b;
+  }
+  .sol-subhdr {
+    font-size: 8.8pt;
+    font-weight: 700;
+    color: #111827;
+    margin: 4px 0 4px 0;
+    break-after: avoid;
+  }
+  .sol-item {
+    border: 1px solid #e5e7eb;
+    border-left: 3px solid #059669;
+    border-radius: 5px;
+    padding: 4px 7px;
+    margin-bottom: 3.8px;
+    background: #fff;
+    break-inside: avoid;
+    font-size: 8pt;
+    line-height: 1.32;
+  }
+  .sol-head {
+    margin-bottom: 1.5px;
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .sol-qnum { font-weight: 800; color: #111827; }
+  .sol-ans {
+    background: #047857;
+    color: #fff;
+    font-weight: 700;
+    font-size: 7.3pt;
+    padding: 0.5px 5px;
+    border-radius: 4px;
+  }
+  .sol-opt-preview { font-weight: 600; color: #065f46; }
+  .sol-body { color: #374151; text-align: justify; margin-bottom: 1.5px; }
+  .sol-tip { color: #92400e; background: #fffbeb; padding: 1.5px 5px; border-radius: 4px; font-size: 7.6pt; }
+
+  .tf-sol-box {
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    padding: 5px 8px;
+    margin-bottom: 5px;
+    background: #fafafa;
+    break-inside: avoid;
+  }
+  .tf-sol-title {
+    font-weight: 700;
+    color: #1e3a8a;
+    font-size: 8.3pt;
+    margin-bottom: 3px;
+  }
+  .tf-sol-row {
+    padding: 2.5px 0;
+    border-top: 1px dashed #e5e7eb;
+    font-size: 7.9pt;
+    line-height: 1.3;
+  }
+  .tf-sol-top { margin-bottom: 1px; }
+  .tf-badge {
+    display: inline-block;
+    padding: 0.5px 5px;
+    border-radius: 4px;
+    font-weight: 700;
+    font-size: 7.1pt;
+    margin: 0 3px;
+  }
+  .tf-badge.ok { background: #d1fae5; color: #065f46; }
+  .tf-badge.no { background: #fee2e2; color: #991b1b; }
+  .tf-sol-stmt { font-weight: 600; color: #111827; }
+  .tf-sol-exp { color: #374151; padding-left: 6px; text-align: justify; }
+
+  /* Final 1-page 60s Cheat Sheet */
+  .cheat-page { font-size: 8.15pt; line-height: 1.36; }
+  .cheat-banner {
+    background: linear-gradient(135deg, #1e293b 0%, #7f1d1d 100%);
+    color: #fff;
+    padding: 10px 14px;
+    border-radius: 8px;
+    margin-bottom: 9px;
+    text-align: center;
+  }
+  .cheat-kicker { font-size: 7.4pt; letter-spacing: 0.8px; color: #fde68a; font-weight: 700; }
+  .cheat-title { font-family: "Times New Roman", Cambria, serif; font-size: 14pt; font-weight: 700; margin: 2px 0; }
+  .cheat-sub { font-size: 8pt; color: #e2e8f0; }
+  .cheat-grid-2 {
+    display: grid;
+    grid-template-columns: 1.06fr 0.94fr;
+    gap: 8px;
+    align-items: start;
+  }
+  .cheat-box {
+    border: 1px solid #e5e7eb;
+    border-radius: 7px;
+    padding: 7px 9px;
+    background: #fff;
+  }
+  .red-top { border-top: 3.5px solid #b91c1c; }
+  .amber-top { border-top: 3.5px solid #d97706; }
+  .green-top { border-top: 3.5px solid #059669; }
+  .navy-top { border-top: 3.5px solid #1d4ed8; background: #f8fbff; }
+  .cheat-h {
+    font-weight: 800;
+    font-size: 8.5pt;
+    color: #111827;
+    margin-bottom: 4.5px;
+    letter-spacing: 0.2px;
+  }
+  .cheat-list { padding-left: 14px; }
+  .cheat-list li { margin-bottom: 3px; text-align: justify; }
+  .cheat-traps-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px 12px;
+    font-size: 8pt;
+  }
+</style>
+</head>
+<body>
+  <!-- COVER / HERO -->
+  <div class="hero">
+    <div class="hero-kicker">Lịch sử 12 • SÁCH GIÁO KHOA Kết nối tri thức với cuộc sống (GDPT 2018)</div>
+    <div class="hero-title">BÀI 6: CÁCH MẠNG THÁNG TÁM NĂM 1945</div>
+    <div class="hero-sub">Cẩm nang ôn cấp tốc kiểm tra 15 phút • Sơ đồ mốc thời gian • 10 bẫy kinh điển • 2 Đề thi thử chuẩn Bộ GD&amp;ĐT kèm giải chi tiết</div>
+    <div class="hero-pills">
+      <span class="hero-pill">Bám sát 100% SGK KNTT</span>
+      <span class="hero-pill">2 Đề 15 phút (12 TN + 2 Đúng/Sai)</span>
+      <span class="hero-pill">Giải thích từng ý a–d</span>
+      <span class="hero-pill">Kèm Tờ Phao Nhớ Nhanh 60 Giây</span>
+    </div>
+  </div>
+
+  <!-- SECTION A: THEORY & TIMELINE -->
+  <div class="section-banner red-banner">
+    <span>★</span> PHẦN A. HỆ THỐNG LÝ THUYẾT TRỌNG TÂM &amp; TRỤC THỜI GIAN BÀI 6
+  </div>
+  
+    <div class="svg-card">
+      <div class="svg-caption">SƠ ĐỒ TRỤC THỜI GIAN 10 MỐC SỐNG CÒN: CÁCH MẠNG THÁNG TÁM NĂM 1945 (13/8 → 2/9/1945)</div>
+      <svg viewBox="0 0 740 256" width="100%" xmlns="http://www.w3.org/2000/svg" style="display:block;font-family:'Segoe UI',Arial,sans-serif;">
+        <rect x="0" y="0" width="740" height="256" rx="10" fill="#fffaf7"/>
+        <line x1="72" y1="34" x2="668" y2="34" stroke="#fca5a5" stroke-width="3" stroke-linecap="round"/><path d="M 668 34 L 705 34 Q 722 34 722 52 L 722 108 Q 722 126 705 126 L 35 126 Q 18 126 18 144 L 18 156 Q 18 172 35 172 L 72 172" fill="none" stroke="#fed7aa" stroke-width="2.5" stroke-dasharray="5,4"/><line x1="72" y1="172" x2="668" y2="172" stroke="#fdba74" stroke-width="3" stroke-linecap="round"/>
+          <g transform="translate(72, 34)">
+            <circle cx="0" cy="0" r="10" fill="#991b1b" stroke="#fff" stroke-width="2.5"/>
+            <text x="0" y="3.5" text-anchor="middle" font-size="9.5" font-weight="700" fill="#fff">1</text>
+            <rect x="-66" y="16" width="132" height="58" rx="7" fill="#ffffff" stroke="#991b1b" stroke-width="1.2"/>
+            <rect x="-66" y="16" width="132" height="19" rx="7" fill="#991b1b"/>
+            <rect x="-66" y="28" width="132" height="7" fill="#991b1b"/>
+            <text x="0" y="29" text-anchor="middle" font-size="10" font-weight="700" fill="#ffffff">13/8</text>
+            <text x="0" y="49" text-anchor="middle" font-size="10.2" font-weight="700" fill="#111827">Quân lệnh số 1</text>
+            <text x="0" y="64" text-anchor="middle" font-size="8.8" fill="#4b5563">Ủy ban KN toàn quốc</text>
+          </g>
+        
+          <g transform="translate(221, 34)">
+            <circle cx="0" cy="0" r="10" fill="#b91c1c" stroke="#fff" stroke-width="2.5"/>
+            <text x="0" y="3.5" text-anchor="middle" font-size="9.5" font-weight="700" fill="#fff">2</text>
+            <rect x="-66" y="16" width="132" height="58" rx="7" fill="#ffffff" stroke="#b91c1c" stroke-width="1.2"/>
+            <rect x="-66" y="16" width="132" height="19" rx="7" fill="#b91c1c"/>
+            <rect x="-66" y="28" width="132" height="7" fill="#b91c1c"/>
+            <text x="0" y="29" text-anchor="middle" font-size="10" font-weight="700" fill="#ffffff">14–15/8</text>
+            <text x="0" y="49" text-anchor="middle" font-size="10.2" font-weight="700" fill="#111827">Hội nghị Đảng</text>
+            <text x="0" y="64" text-anchor="middle" font-size="8.8" fill="#4b5563">Tân Trào • Tổng KN</text>
+          </g>
+        
+          <g transform="translate(370, 34)">
+            <circle cx="0" cy="0" r="10" fill="#b45309" stroke="#fff" stroke-width="2.5"/>
+            <text x="0" y="3.5" text-anchor="middle" font-size="9.5" font-weight="700" fill="#fff">3</text>
+            <rect x="-66" y="16" width="132" height="58" rx="7" fill="#ffffff" stroke="#b45309" stroke-width="1.2"/>
+            <rect x="-66" y="16" width="132" height="19" rx="7" fill="#b45309"/>
+            <rect x="-66" y="28" width="132" height="7" fill="#b45309"/>
+            <text x="0" y="29" text-anchor="middle" font-size="10" font-weight="700" fill="#ffffff">15/8</text>
+            <text x="0" y="49" text-anchor="middle" font-size="10.2" font-weight="700" fill="#111827">Nhật đầu hàng</text>
+            <text x="0" y="64" text-anchor="middle" font-size="8.8" fill="#4b5563">Thời cơ vàng mở ra</text>
+          </g>
+        
+          <g transform="translate(519, 34)">
+            <circle cx="0" cy="0" r="10" fill="#b91c1c" stroke="#fff" stroke-width="2.5"/>
+            <text x="0" y="3.5" text-anchor="middle" font-size="9.5" font-weight="700" fill="#fff">4</text>
+            <rect x="-66" y="16" width="132" height="58" rx="7" fill="#ffffff" stroke="#b91c1c" stroke-width="1.2"/>
+            <rect x="-66" y="16" width="132" height="19" rx="7" fill="#b91c1c"/>
+            <rect x="-66" y="28" width="132" height="7" fill="#b91c1c"/>
+            <text x="0" y="29" text-anchor="middle" font-size="10" font-weight="700" fill="#ffffff">16–17/8</text>
+            <text x="0" y="49" text-anchor="middle" font-size="10.2" font-weight="700" fill="#111827">ĐH Quốc dân</text>
+            <text x="0" y="64" text-anchor="middle" font-size="8.8" fill="#4b5563">UB DT Giải phóng VN</text>
+          </g>
+        
+          <g transform="translate(668, 34)">
+            <circle cx="0" cy="0" r="10" fill="#047857" stroke="#fff" stroke-width="2.5"/>
+            <text x="0" y="3.5" text-anchor="middle" font-size="9.5" font-weight="700" fill="#fff">5</text>
+            <rect x="-66" y="16" width="132" height="58" rx="7" fill="#ffffff" stroke="#047857" stroke-width="1.2"/>
+            <rect x="-66" y="16" width="132" height="19" rx="7" fill="#047857"/>
+            <rect x="-66" y="28" width="132" height="7" fill="#047857"/>
+            <text x="0" y="29" text-anchor="middle" font-size="10" font-weight="700" fill="#ffffff">18/8</text>
+            <text x="0" y="49" text-anchor="middle" font-size="10.2" font-weight="700" fill="#111827">4 tỉnh lị sớm nhất</text>
+            <text x="0" y="64" text-anchor="middle" font-size="8.8" fill="#4b5563">BG • HD • HT • QN</text>
+          </g>
+        
+          <g transform="translate(72, 172)">
+            <circle cx="0" cy="0" r="10" fill="#991b1b" stroke="#fff" stroke-width="2.5"/>
+            <text x="0" y="3.5" text-anchor="middle" font-size="9.5" font-weight="700" fill="#fff">6</text>
+            <rect x="-66" y="16" width="132" height="58" rx="7" fill="#ffffff" stroke="#991b1b" stroke-width="1.2"/>
+            <rect x="-66" y="16" width="132" height="19" rx="7" fill="#991b1b"/>
+            <rect x="-66" y="28" width="132" height="7" fill="#991b1b"/>
+            <text x="0" y="29" text-anchor="middle" font-size="10" font-weight="700" fill="#ffffff">19/8</text>
+            <text x="0" y="49" text-anchor="middle" font-size="10.2" font-weight="700" fill="#111827">Hà Nội thắng lợi</text>
+            <text x="0" y="64" text-anchor="middle" font-size="8.8" fill="#4b5563">Đô thị lớn 1 • Cổ vũ</text>
+          </g>
+        
+          <g transform="translate(221, 172)">
+            <circle cx="0" cy="0" r="10" fill="#c2410c" stroke="#fff" stroke-width="2.5"/>
+            <text x="0" y="3.5" text-anchor="middle" font-size="9.5" font-weight="700" fill="#fff">7</text>
+            <rect x="-66" y="16" width="132" height="58" rx="7" fill="#ffffff" stroke="#c2410c" stroke-width="1.2"/>
+            <rect x="-66" y="16" width="132" height="19" rx="7" fill="#c2410c"/>
+            <rect x="-66" y="28" width="132" height="7" fill="#c2410c"/>
+            <text x="0" y="29" text-anchor="middle" font-size="10" font-weight="700" fill="#ffffff">23/8</text>
+            <text x="0" y="49" text-anchor="middle" font-size="10.2" font-weight="700" fill="#111827">Huế thắng lợi</text>
+            <text x="0" y="64" text-anchor="middle" font-size="8.8" fill="#4b5563">Đô thị lớn 2 • Kinh đô</text>
+          </g>
+        
+          <g transform="translate(370, 172)">
+            <circle cx="0" cy="0" r="10" fill="#c2410c" stroke="#fff" stroke-width="2.5"/>
+            <text x="0" y="3.5" text-anchor="middle" font-size="9.5" font-weight="700" fill="#fff">8</text>
+            <rect x="-66" y="16" width="132" height="58" rx="7" fill="#ffffff" stroke="#c2410c" stroke-width="1.2"/>
+            <rect x="-66" y="16" width="132" height="19" rx="7" fill="#c2410c"/>
+            <rect x="-66" y="28" width="132" height="7" fill="#c2410c"/>
+            <text x="0" y="29" text-anchor="middle" font-size="10" font-weight="700" fill="#ffffff">25/8</text>
+            <text x="0" y="49" text-anchor="middle" font-size="10.2" font-weight="700" fill="#111827">Sài Gòn thắng lợi</text>
+            <text x="0" y="64" text-anchor="middle" font-size="8.8" fill="#4b5563">Đô thị lớn 3 • Nam Bộ</text>
+          </g>
+        
+          <g transform="translate(519, 172)">
+            <circle cx="0" cy="0" r="10" fill="#047857" stroke="#fff" stroke-width="2.5"/>
+            <text x="0" y="3.5" text-anchor="middle" font-size="9.5" font-weight="700" fill="#fff">9</text>
+            <rect x="-66" y="16" width="132" height="58" rx="7" fill="#ffffff" stroke="#047857" stroke-width="1.2"/>
+            <rect x="-66" y="16" width="132" height="19" rx="7" fill="#047857"/>
+            <rect x="-66" y="28" width="132" height="7" fill="#047857"/>
+            <text x="0" y="29" text-anchor="middle" font-size="10" font-weight="700" fill="#ffffff">28/8</text>
+            <text x="0" y="49" text-anchor="middle" font-size="10.2" font-weight="700" fill="#111827">Thắng lợi cả nước</text>
+            <text x="0" y="64" text-anchor="middle" font-size="8.8" fill="#4b5563">ĐN Thượng &amp; Hà Tiên</text>
+          </g>
+        
+          <g transform="translate(668, 172)">
+            <circle cx="0" cy="0" r="10" fill="#1e3a8a" stroke="#fff" stroke-width="2.5"/>
+            <text x="0" y="3.5" text-anchor="middle" font-size="9.5" font-weight="700" fill="#fff">10</text>
+            <rect x="-66" y="16" width="132" height="58" rx="7" fill="#ffffff" stroke="#1e3a8a" stroke-width="1.2"/>
+            <rect x="-66" y="16" width="132" height="19" rx="7" fill="#1e3a8a"/>
+            <rect x="-66" y="28" width="132" height="7" fill="#1e3a8a"/>
+            <text x="0" y="29" text-anchor="middle" font-size="10" font-weight="700" fill="#ffffff">30/8 &amp; 2/9</text>
+            <text x="0" y="49" text-anchor="middle" font-size="10.2" font-weight="700" fill="#111827">Thoái vị &amp; Độc lập</text>
+            <text x="0" y="64" text-anchor="middle" font-size="8.8" fill="#4b5563">Khai sinh VNDCCH</text>
+          </g>
+        
+      </svg>
+    </div>
+    
+  
+          <div class="theory-sec">
+            <div class="sec-head">
+              <span class="sec-num">1</span>
+              <div>
+                <div class="sec-title">Bối cảnh lịch sử &amp; Thời cơ &quot;ngàn năm có một&quot;</div>
+                <div class="sec-sub">Tình hình thế giới, trong nước và chủ trương kịp thời của Đảng</div>
+              </div>
+            </div>
+            
+              <div class="theory-block">
+                <div class="theory-subhead">a) Bối cảnh thế giới (Khách quan thuận lợi)</div>
+                <ul class="theory-list"><li>Đầu tháng 8/1945, Chiến tranh thế giới thứ hai bước vào giai đoạn kết thúc (phát xít Đức đã đầu hàng ở châu Âu từ tháng 5/1945).</li><li>Ở châu Á – Thái Bình Dương, quân Đồng minh dồn dập tấn công Nhật Bản: Mỹ ném hai quả bom nguyên tử xuống Hi-rô-si-ma (6/8) và Na-ga-xa-ki (9/8); Hồng quân Liên Xô tuyên chiến (8/8) và tấn công tiêu diệt đạo quân Quan Đông của Nhật ở Đông Bắc Trung Quốc (9/8).</li><li>Ngày 15/8/1945, Nhật hoàng tuyên bố đầu hàng Đồng minh không điều kiện. Chiến tranh thế giới thứ hai chấm dứt.</li></ul>
+              </div>
+            
+              <div class="theory-block">
+                <div class="theory-subhead">b) Bối cảnh trong nước &amp; Thời cơ &quot;ngàn năm có một&quot;</div>
+                <ul class="theory-list"><li>Kẻ thù tê liệt: Quân Nhật ở Đông Dương rệu rã, mất hết tinh thần chiến đấu; chính phủ thân Nhật Trần Trọng Kim hoang mang, dao động cực độ.</li><li>Lực lượng cách mạng sẵn sàng: Trải qua 15 năm chuẩn bị (1930–1945) và trực tiếp là Cao trào kháng Nhật cứu nước (từ tháng 3 đến giữa tháng 8/1945, sau sự kiện Nhật đảo chính Pháp 9/3 và Chỉ thị &quot;Nhật - Pháp bắn nhau và hành động của chúng ta&quot; ngày 12/3/1945), lực lượng chính trị, vũ trang và khí thế quần chúng đã sẵn sàng; tầng lớp trung gian ngả hẳn về phía cách mạng.</li><li>Thời cơ vàng (rất ngắn ngủi): Chỉ tồn tại từ khi Nhật Bản đầu hàng Đồng minh (15/8/1945) đến TRƯỚC KHI quân Đồng minh (Anh, Trung Hoa Dân quốc) kéo vào Đông Dương giải giáp quân Nhật (đầu tháng 9/1945). Kẻ thù cũ đã gục ngã, kẻ thù mới chưa kịp đến!</li></ul>
+              </div>
+            
+              <div class="theory-block">
+                <div class="theory-subhead">c) Chủ trương kịp thời của Đảng và Hồ Chí Minh (13 – 17/8/1945)</div>
+                <ul class="theory-list"><li>Ngày 13/8/1945: Ngay khi nhận tin Nhật sắp đầu hàng, Trung ương Đảng và Tổng bộ Việt Minh lập Ủy ban Khởi nghĩa toàn quốc, ban bố Quân lệnh số 1 (23 giờ ngày 13/8), chính thức phát lệnh Tổng khởi nghĩa trong cả nước.</li><li>Ngày 14 – 15/8/1945: Hội nghị toàn quốc của Đảng họp tại Tân Trào (Tuyên Quang), thông qua kế hoạch lãnh đạo toàn dân Tổng khởi nghĩa giành chính quyền trước khi quân Đồng minh vào; quyết định những vấn đề quan trọng về đối nội, đối ngoại sau khi giành chính quyền.</li><li>Ngày 16 – 17/8/1945: Đại hội Quốc dân họp tại Tân Trào, tán thành chủ trương Tổng khởi nghĩa của Đảng, thông qua 10 chính sách lớn của Việt Minh, quy định Quốc kì (cờ đỏ sao vàng), Quốc ca (Tiến quân ca) và cử ra Ủy ban Dân tộc giải phóng Việt Nam do Hồ Chí Minh làm Chủ tịch.</li><li>Ngày 18/8/1945: Chủ tịch Hồ Chí Minh gửi Thư kêu gọi Tổng khởi nghĩa: &quot;Giờ quyết định cho vận mệnh dân tộc ta đã đến. Toàn quốc đồng bào hãy đứng dậy đem sức ta mà tự giải phóng cho ta.&quot;</li></ul>
+              </div>
+            
+          </div>
+        
+          <div class="theory-sec">
+            <div class="sec-head">
+              <span class="sec-num">2</span>
+              <div>
+                <div class="sec-title">Diễn biến chính của Cách mạng tháng Tám năm 1945</div>
+                <div class="sec-sub">15 ngày sục sôi (14/8 → 28/8/1945) và mốc son khai sinh nước Việt Nam mới (2/9/1945)</div>
+              </div>
+            </div>
+            
+              <div class="theory-block">
+                <div class="theory-subhead">a) Khởi nghĩa bùng nổ và giành chính quyền sớm ở các địa phương</div>
+                <ul class="theory-list"><li>Từ ngày 14/8/1945: Nhiều cấp bộ Đảng và Việt Minh ở cơ sở (một số xã, huyện thuộc đồng bằng sông Hồng, Thanh Hóa, Nghệ An, Hà Tĩnh, Thừa Thiên Huế, Quảng Ngãi, Khánh Hòa...) dù chưa nhận được Quân lệnh số 1 vẫn chủ động căn cứ vào Chỉ thị 12/3/1945 phát động nhân dân nổi dậy giành chính quyền.</li><li>Chiều 16/8/1945: Một đơn vị Giải phóng quân do Võ Nguyên Giáp chỉ huy xuất phát từ Tân Trào tiến về bao vây, đánh chiếm thị xã Thái Nguyên, mở đầu cuộc Tổng khởi nghĩa bằng lực lượng vũ trang.</li><li>Ngày 18/8/1945: Nhân dân 4 tỉnh Bắc Giang, Hải Dương, Hà Tĩnh và Quảng Nam giành được chính quyền ở tỉnh lị SỚM NHẤT cả nước.</li></ul>
+              </div>
+            
+              <div class="theory-block">
+                <div class="theory-subhead">b) Thắng lợi quyết định tại 3 trung tâm đô thị lớn</div>
+                <ul class="theory-list"><li>Hà Nội (19/8/1945): Cuộc mít tinh lớn tại Nhà hát Lớn biến thành biểu tình vũ trang, quần chúng chiếm Phủ Khâm sai, Tòa Thị chính, Trại Bảo an binh... Tối 19/8, khởi nghĩa thắng lợi hoàn toàn tại Thủ đô, cổ vũ mạnh mẽ cả nước.</li><li>Huế (23/8/1945): Hàng vạn nhân dân nội, ngoại thành kéo về trung tâm thành phố chiếm các công sở, giành chính quyền tại kinh đô triều Nguyễn.</li><li>Sài Gòn (25/8/1945): Hơn 1 triệu quần chúng Sài Gòn – Chợ Lớn và các tỉnh lân cận biểu tình rầm rộ, giành chính quyền ở trung tâm lớn nhất Nam Bộ.</li></ul>
+              </div>
+            
+              <div class="theory-block">
+                <div class="theory-subhead">c) Hoàn thành trên cả nước &amp; Khai sinh nước Việt Nam Dân chủ Cộng hòa</div>
+                <ul class="theory-list"><li>Ngày 28/8/1945: Hai tỉnh cuối cùng trên đất liền là Đồng Nai Thượng và Hà Tiên giành được chính quyền → Tổng khởi nghĩa thắng lợi trên phạm vi cả nước chỉ trong 15 ngày (14–28/8/1945). Cùng ngày, Ủy ban Dân tộc giải phóng Việt Nam cải tổ thành Chính phủ lâm thời nước Việt Nam Dân chủ Cộng hòa.</li><li>Ngày 30/8/1945: Tại Ngọ Môn (Huế), vua Bảo Đại đọc chiếu thoái vị và trao ấn kiếm cho đại diện Chính phủ lâm thời → Chế độ quân chủ phong kiến Việt Nam hơn 1000 năm hoàn toàn sụp đổ.</li><li>Ngày 2/9/1945: Tại Quảng trường Ba Đình (Hà Nội), Chủ tịch Hồ Chí Minh thay mặt Chính phủ lâm thời đọc bản Tuyên ngôn Độc lập, trịnh trọng tuyên bố sự ra đời của nước Việt Nam Dân chủ Cộng hòa.</li></ul>
+              </div>
+            
+          </div>
+        
+          <div class="theory-sec">
+            <div class="sec-head">
+              <span class="sec-num">3</span>
+              <div>
+                <div class="sec-title">Nguyên nhân thắng lợi, Ý nghĩa lịch sử &amp; Bài học kinh nghiệm</div>
+                <div class="sec-sub">Trọng tâm ăn điểm câu Thông hiểu – Vận dụng – Đúng/Sai</div>
+              </div>
+            </div>
+            
+              <div class="theory-block">
+                <div class="theory-subhead">a) Nguyên nhân thắng lợi (Chủ quan QUYẾT ĐỊNH — Khách quan THUẬN LỢI)</div>
+                <ul class="theory-list"><li>Chủ quan (Quyết định nhất): (1) Sự lãnh đạo đúng đắn, sáng suốt, tài tình của Đảng Cộng sản Đông Dương, đứng đầu là Chủ tịch Hồ Chí Minh (NHÂN TỐ QUYẾT ĐỊNH HÀNG ĐẦU); (2) Quá trình chuẩn bị chu đáo suốt 15 năm (1930–1945) qua 3 phong trào cách mạng (1930–1931, 1936–1939, 1939–1945); (3) Truyền thống yêu nước nồng nàn, tinh thần đoàn kết, ý chí đấu tranh bất khuất của toàn dân tộc dưới ngọn cờ Mặt trận Việt Minh.</li><li>Khách quan (Điều kiện thuận lợi): Chiến thắng của Hồng quân Liên Xô và các lực lượng Đồng minh trong cuộc chiến tranh chống phát xít (đặc biệt là đánh bại quân phiệt Nhật Bản), làm kẻ thù trực tiếp ở Đông Dương suy sụp, tạo thời cơ khách quan thuận lợi.</li></ul>
+              </div>
+            
+              <div class="theory-block">
+                <div class="theory-subhead">b) Ý nghĩa lịch sử (Đối với Việt Nam &amp; Thế giới)</div>
+                <ul class="theory-list"><li>Đối với dân tộc Việt Nam: Lật đổ ách cai trị của thực dân Pháp hơn 80 năm, quân phiệt Nhật gần 5 năm; chấm dứt chế độ quân chủ hơn 1000 năm; lập nên nước Việt Nam Dân chủ Cộng hòa — nhà nước dân chủ nhân dân đầu tiên ở Đông Nam Á.</li><li>Bước ngoặt nhảy vọt: Mở ra kỷ nguyên mới — kỷ nguyên độc lập, tự do và phát triển dưới chế độ dân chủ cộng hòa; nhân dân từ thân phận nô lệ trở thành người làm chủ đất nước; Đảng Cộng sản Đông Dương từ đảng hoạt động bí mật trở thành ĐẢNG CẦM QUYỀN; chuẩn bị tiền đề cho các thắng lợi tiếp theo.</li><li>Đối với thế giới: Góp phần vào thắng lợi chung của các lực lượng hòa bình, dân chủ, tiến bộ chống chủ nghĩa phát xít; góp phần làm tan rã hệ thống thuộc địa của chủ nghĩa thực dân (chọc thủng khâu yếu nhất); cổ vũ mạnh mẽ phong trào giải phóng dân tộc trên thế giới.</li></ul>
+              </div>
+            
+              <div class="theory-block">
+                <div class="theory-subhead">c) Bài học kinh nghiệm &amp; Đặc điểm – Tính chất cần nhớ</div>
+                <ul class="theory-list"><li>4 Bài học kinh nghiệm: (1) Về sự lãnh đạo của Đảng (đường lối đúng đắn, vận dụng sáng tạo chủ nghĩa Mác - Lênin, chủ động linh hoạt); (2) Về xây dựng và phát huy khối đại đoàn kết toàn dân tộc (qua Mặt trận Việt Minh và các hình thức tập hợp quần chúng phong phú); (3) Về nắm bắt thời cơ (xác định đúng, chủ động, mau lẹ chớp thời cơ hành động); (4) Về kết hợp sức mạnh dân tộc với sức mạnh thời đại (nội lực giữ vai trò quyết định).</li><li>Tính chất: Là cuộc cách mạng giải phóng dân tộc điển hình, mang tính chất dân chủ mới (chưa phải cách mạng XHCN, chưa giải quyết triệt để vấn đề ruộng đất/tàn dư phong kiến).</li><li>Đặc điểm nghệ thuật khởi nghĩa: Kết hợp đấu tranh chính trị với vũ trang (LỰC LƯỢNG CHÍNH TRỊ QUYẾT ĐỊNH, lực lượng vũ trang làm nòng cốt); kết hợp nông thôn và thành thị (thắng lợi ở đô thị lớn có ý nghĩa quyết định); đi từ khởi nghĩa từng phần lên tổng khởi nghĩa; giành chính quyền nhanh chóng (15 ngày), ít đổ máu.</li></ul>
+              </div>
+            
+          </div>
+        
+  
+    <div class="compare-box">
+      <div class="box-title">BẢNG PHÂN BIỆT NHANH 3 SỰ KIỆN LÃNH ĐẠO CÁCH MẠNG (13 – 17/8/1945) — CỰC HAY RA TRẮC NGHIỆM!</div>
+      <table class="std-table">
+        <thead>
+          <tr>
+            <th style="width:15%">Thời gian</th>
+            <th style="width:27%">Sự kiện / Cơ quan</th>
+            <th style="width:36%">Quyết định trọng tâm</th>
+            <th style="width:22%">Từ khóa chốt đáp án</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>13/8/1945</strong></td>
+            <td><strong>Ủy ban Khởi nghĩa toàn quốc</strong> (Trung ương Đảng &amp; Tổng bộ Việt Minh lập)</td>
+            <td>Ban bố <strong>Quân lệnh số 1</strong> (23 giờ ngày 13/8), chính thức phát lệnh Tổng khởi nghĩa trong cả nước.</td>
+            <td><span class="pill red">Quân lệnh số 1</span></td>
+          </tr>
+          <tr>
+            <td><strong>14 – 15/8/1945</strong></td>
+            <td><strong>Hội nghị toàn quốc của Đảng</strong> (Tân Trào, Tuyên Quang)</td>
+            <td>Thông qua kế hoạch lãnh đạo toàn dân Tổng khởi nghĩa trước khi quân Đồng minh vào; quyết định đối nội, đối ngoại.</td>
+            <td><span class="pill amber">Kế hoạch Đảng • Đối nội/ngoại</span></td>
+          </tr>
+          <tr>
+            <td><strong>16 – 17/8/1945</strong></td>
+            <td><strong>Đại hội Quốc dân Tân Trào</strong> (Tuyên Quang)</td>
+            <td>Tán thành Tổng khởi nghĩa, thông qua 10 chính sách Việt Minh, quy định Quốc kì &amp; Quốc ca, cử <strong>Ủy ban Dân tộc giải phóng VN</strong> (Hồ Chí Minh làm Chủ tịch).</td>
+            <td><span class="pill green">10 chính sách • UB DT Giải phóng</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    
+
+  <!-- TRAPS & SOURCES -->
+  <div class="page-break"></div>
+  
+      <div class="section-banner amber-banner">
+        <span>⚠</span> 10 BẪY KINH ĐIỂN HAY RA TRONG ĐỀ KIỂM TRA 15 PHÚT BÀI 6
+      </div>
+      <div class="traps-wrap">
+          <div class="trap-card">
+            <div class="trap-hdr"><span class="trap-num">Bẫy 1</span> Kẻ thù trực tiếp bị đánh đổ trong tháng 8/1945</div>
+            <div class="trap-grid">
+              <div class="trap-bad"><strong>✗ Dễ dính bẫy:</strong> Giành chính quyền từ tay thực dân Pháp và phát xít Nhật.</div>
+              <div class="trap-good"><strong>✓ Chuẩn SGK:</strong> Giành chính quyền từ tay PHÁT XÍT NHẬT và chính quyền tay sai thân Nhật (Trần Trọng Kim).</div>
+            </div>
+            <div class="trap-why"><em>Giải thích nhanh:</em> Thực dân Pháp đã bị Nhật đảo chính lật đổ từ đêm 9/3/1945 nên tháng 8/1945 ta giành chính quyền trực tiếp từ tay Nhật (dù ý nghĩa lịch sử là lật đổ ách thống trị hơn 80 năm của Pháp và gần 5 năm của Nhật).</div>
+          </div>
+        
+          <div class="trap-card">
+            <div class="trap-hdr"><span class="trap-num">Bẫy 2</span> Ai ban bố &quot;Quân lệnh số 1&quot; ngày 13/8/1945?</div>
+            <div class="trap-grid">
+              <div class="trap-bad"><strong>✗ Dễ dính bẫy:</strong> Hội nghị toàn quốc của Đảng hoặc Đại hội Quốc dân Tân Trào.</div>
+              <div class="trap-good"><strong>✓ Chuẩn SGK:</strong> ỦY BAN KHỞI NGHĨA TOÀN QUỐC (do Trung ương Đảng và Tổng bộ Việt Minh lập ra ngày 13/8).</div>
+            </div>
+            <div class="trap-why"><em>Giải thích nhanh:</em> Mốc ngày rất rõ: 13/8 lập Ủy ban Khởi nghĩa &amp; ra Quân lệnh số 1 → 14–15/8 Hội nghị toàn quốc của Đảng → 16–17/8 Đại hội Quốc dân.</div>
+          </div>
+        
+          <div class="trap-card">
+            <div class="trap-hdr"><span class="trap-num">Bẫy 3</span> Khoảng thời gian của &quot;Thời cơ ngàn năm có một&quot;</div>
+            <div class="trap-grid">
+              <div class="trap-bad"><strong>✗ Dễ dính bẫy:</strong> Từ khi Nhật đảo chính Pháp (9/3/1945) hoặc kéo dài đến cuối năm 1945.</div>
+              <div class="trap-good"><strong>✓ Chuẩn SGK:</strong> Từ khi Nhật đầu hàng Đồng minh (15/8/1945) đến TRƯỚC KHI quân Đồng minh kéo vào Đông Dương (đầu 9/1945).</div>
+            </div>
+            <div class="trap-why"><em>Giải thích nhanh:</em> Nếu khởi nghĩa trước 15/8 khi Nhật chưa thua hẳn thì địch còn mạnh; nếu để sau khi quân Đồng minh (Anh, Tưởng) kéo vào thì sẽ vấp phải kẻ thù mới.</div>
+          </div>
+        
+          <div class="trap-card">
+            <div class="trap-hdr"><span class="trap-num">Bẫy 4</span> Nơi giành chính quyền sớm nhất vs 4 tỉnh lị sớm nhất</div>
+            <div class="trap-grid">
+              <div class="trap-bad"><strong>✗ Dễ dính bẫy:</strong> Ngày 18/8 mới bắt đầu nổ ra khởi nghĩa giành chính quyền ở Việt Nam.</div>
+              <div class="trap-good"><strong>✓ Chuẩn SGK:</strong> Từ 14/8 đã có nhiều xã, huyện giành chính quyền; còn 18/8 là 4 TỈNH LỊ sớm nhất (Bắc Giang, Hải Dương, Hà Tĩnh, Quảng Nam).</div>
+            </div>
+            <div class="trap-why"><em>Giải thích nhanh:</em> Đọc kỹ đề: hỏi &#x27;bắt đầu nổ ra ở cơ sở&#x27; → 14/8; hỏi &#x27;4 tỉnh giành chính quyền ở tỉnh lị sớm nhất&#x27; → 18/8.</div>
+          </div>
+        
+          <div class="trap-card">
+            <div class="trap-hdr"><span class="trap-num">Bẫy 5</span> Mốc chấm dứt hoàn toàn chế độ quân chủ (phong kiến)</div>
+            <div class="trap-grid">
+              <div class="trap-bad"><strong>✗ Dễ dính bẫy:</strong> Ngày 19/8 (Hà Nội), ngày 23/8 (Huế) hoặc ngày 2/9 (Tuyên ngôn Độc lập).</div>
+              <div class="trap-good"><strong>✓ Chuẩn SGK:</strong> Ngày 30/8/1945 — sự kiện vua Bảo Đại tuyên bố thoái vị, trao ấn kiếm tại Huế.</div>
+            </div>
+            <div class="trap-why"><em>Giải thích nhanh:</em> Huế giành chính quyền 23/8, nhưng phải đến chiều 30/8 vua Bảo Đại mới chính thức đọc chiếu thoái vị, đặt dấu chấm hết cho chế độ quân chủ hơn 1000 năm.</div>
+          </div>
+        
+          <div class="trap-card">
+            <div class="trap-hdr"><span class="trap-num">Bẫy 6</span> Lực lượng giữ vai trò QUYẾT ĐỊNH trong Tổng khởi nghĩa</div>
+            <div class="trap-grid">
+              <div class="trap-bad"><strong>✗ Dễ dính bẫy:</strong> Lực lượng vũ trang (Giải phóng quân) quyết định, lực lượng chính trị hỗ trợ.</div>
+              <div class="trap-good"><strong>✓ Chuẩn SGK:</strong> LỰC LƯỢNG CHÍNH TRỊ của quần chúng nhân dân quyết định; lực lượng vũ trang làm nòng cốt, xung kích.</div>
+            </div>
+            <div class="trap-why"><em>Giải thích nhanh:</em> Quần chúng đông đảo (hàng chục vạn, hàng triệu người) xuống đường mít tinh, biểu tình làm tê liệt quân địch là nhân tố tạo nên thắng lợi nhanh chóng, ít đổ máu.</div>
+          </div>
+        
+          <div class="trap-card">
+            <div class="trap-hdr"><span class="trap-num">Bẫy 7</span> Nguyên nhân QUYẾT ĐỊNH nhất dẫn đến thắng lợi</div>
+            <div class="trap-grid">
+              <div class="trap-bad"><strong>✗ Dễ dính bẫy:</strong> Chiến thắng của Hồng quân Liên Xô và quân Đồng minh đánh bại phát xít Nhật.</div>
+              <div class="trap-good"><strong>✓ Chuẩn SGK:</strong> Nguyên nhân CHỦ QUAN — đứng đầu là sự lãnh đạo đúng đắn, sáng suốt của Đảng Cộng sản Đông Dương và Chủ tịch Hồ Chí Minh.</div>
+            </div>
+            <div class="trap-why"><em>Giải thích nhanh:</em> Chiến thắng của Liên Xô và Đồng minh là nguyên nhân KHÁCH QUAN tạo điều kiện/thời cơ thuận lợi. Ở Đông Nam Á lúc đó nhiều nước cùng có điều kiện khách quan này nhưng chỉ Việt Nam, In-đô-nê-xi-a, Lào giành độc lập kịp thời!</div>
+          </div>
+        
+          <div class="trap-card">
+            <div class="trap-hdr"><span class="trap-num">Bẫy 8</span> Xóa bỏ chế độ quân chủ ≠ Xóa bỏ hết tàn dư phong kiến</div>
+            <div class="trap-grid">
+              <div class="trap-bad"><strong>✗ Dễ dính bẫy:</strong> Cách mạng tháng Tám đã xóa bỏ hoàn toàn mọi tàn dư phong kiến và hoàn thành cách mạng ruộng đất.</div>
+              <div class="trap-good"><strong>✓ Chuẩn SGK:</strong> Mới chấm dứt chế độ QUÂN CHỦ (nhà nước phong kiến), CHƯA xóa bỏ hoàn toàn tàn dư phong kiến (vấn đề ruộng đất chưa giải quyết triệt để).</div>
+            </div>
+            <div class="trap-why"><em>Giải thích nhanh:</em> Đảng tạm gác khẩu hiệu cách mạng ruộng đất để tập trung tối đa cho nhiệm vụ giải phóng dân tộc và mở rộng khối đại đoàn kết trong Mặt trận Việt Minh.</div>
+          </div>
+        
+          <div class="trap-card">
+            <div class="trap-hdr"><span class="trap-num">Bẫy 9</span> Tính chất của Cách mạng tháng Tám năm 1945</div>
+            <div class="trap-grid">
+              <div class="trap-bad"><strong>✗ Dễ dính bẫy:</strong> Cách mạng xã hội chủ nghĩa hoặc cách mạng tư sản kiểu cũ.</div>
+              <div class="trap-good"><strong>✓ Chuẩn SGK:</strong> Cách mạng GIẢI PHÓNG DÂN TỘC (điển hình) mang tính chất DÂN CHỦ MỚI.</div>
+            </div>
+            <div class="trap-why"><em>Giải thích nhanh:</em> Mục tiêu hàng đầu là đánh đổ đế quốc, phát xít, giành độc lập dân tộc; đồng thời lập chế độ dân chủ cộng hòa, mang lại quyền làm chủ cho nhân dân.</div>
+          </div>
+        
+          <div class="trap-card">
+            <div class="trap-hdr"><span class="trap-num">Bẫy 10</span> Nhật đầu hàng Đồng minh ≠ Quân Nhật bị tiêu diệt hết ngay lập tức</div>
+            <div class="trap-grid">
+              <div class="trap-bad"><strong>✗ Dễ dính bẫy:</strong> Ngày 15/8, quân Nhật ở Đông Dương bị tiêu diệt hoàn toàn nên ta chỉ việc tiếp quản.</div>
+              <div class="trap-good"><strong>✓ Chuẩn SGK:</strong> Quân Nhật ở Đông Dương RỆU RÃ, hoang mang nhưng vẫn còn vũ khí và lực lượng; ta vẫn phải kiên quyết chớp thời cơ khởi nghĩa giành chính quyền.</div>
+            </div>
+            <div class="trap-why"><em>Giải thích nhanh:</em> Nhiều câu Đúng/Sai cố tình đổi từ &#x27;rệu rã, hoang mang&#x27; thành &#x27;bị tiêu diệt hoàn toàn&#x27; hoặc &#x27;tự động trao trả chính quyền cho Việt Minh&#x27; — gặp là chọn SAI ngay!</div>
+          </div>
+        </div>
+    
+  
+      <div class="section-banner navy-banner">
+        <span>📜</span> 4 ĐOẠN TƯ LIỆU VÀNG THƯỜNG DÙNG CHO PHẦN TRẮC NGHIỆM ĐÚNG / SAI
+      </div>
+      
+          <div class="source-card">
+            <div class="source-title">Tư liệu 1 • Quân lệnh số 1 (13/8/1945) <span class="source-meta">— Ủy ban Khởi nghĩa toàn quốc — 23 giờ ngày 13/8/1945</span></div>
+            <blockquote class="source-quote">“Giờ tổng khởi nghĩa đã đánh! Cơ hội có một cho quân dân Việt Nam vùng dậy giành lấy quyền độc lập của nước nhà!... Chúng ta phải hành động cho nhanh, với một tinh thần vô cùng quả cảm, vô cùng thận trọng! Cuộc thắng lợi hoàn toàn nhất định sẽ về ta!”</blockquote>
+            <div class="source-take"><strong>Trọng tâm khai thác câu Đúng/Sai:</strong> Thể hiện sự nhạy bén, quyết đoán tuyệt vời của Trung ương Đảng và Tổng bộ Việt Minh trong việc phát động Tổng khởi nghĩa kịp thời.</div>
+          </div>
+        
+          <div class="source-card">
+            <div class="source-title">Tư liệu 2 • Thư kêu gọi Tổng khởi nghĩa (18/8/1945) <span class="source-meta">— Chủ tịch Hồ Chí Minh — Tháng 8 năm 1945</span></div>
+            <blockquote class="source-quote">“Hỡi đồng bào yêu quý! Giờ quyết định cho vận mệnh dân tộc ta đã đến. Toàn quốc đồng bào hãy đứng dậy đem sức ta mà tự giải phóng cho ta... Chúng ta không thể chậm trễ. Tiến lên! Tiến lên! Dưới lá cờ Việt Minh, đồng bào hãy dũng cảm tiến lên!”</blockquote>
+            <div class="source-take"><strong>Trọng tâm khai thác câu Đúng/Sai:</strong> Nhấn mạnh tinh thần tự lực tự cường (&#x27;đem sức ta mà tự giải phóng cho ta&#x27;), khối đại đoàn kết dưới ngọn cờ Mặt trận Việt Minh và tính khẩn trương chớp thời cơ.</div>
+          </div>
+        
+          <div class="source-card">
+            <div class="source-title">Tư liệu 3 • Tuyên ngôn Độc lập (2/9/1945) <span class="source-meta">— Chủ tịch Hồ Chí Minh đọc tại Quảng trường Ba Đình, Hà Nội</span></div>
+            <blockquote class="source-quote">“Nước Việt Nam có quyền hưởng tự do và độc lập, và sự thật đã thành một nước tự do độc lập. Toàn thể dân tộc Việt Nam quyết đem tất cả tinh thần và lực lượng, tính mạng và của cải để giữ vững quyền tự do, độc lập ấy.”</blockquote>
+            <div class="source-take"><strong>Trọng tâm khai thác câu Đúng/Sai:</strong> Khai sinh nước Việt Nam Dân chủ Cộng hòa — nhà nước dân chủ nhân dân đầu tiên ở Đông Nam Á, mở ra kỷ nguyên độc lập, tự do.</div>
+          </div>
+        
+          <div class="source-card">
+            <div class="source-title">Tư liệu 4 • Đánh giá tầm vóc Cách mạng tháng Tám <span class="source-meta">— Chủ tịch Hồ Chí Minh (Báo cáo Chính trị tại Đại hội II của Đảng, 1951 — trích SGK KNTT)</span></div>
+            <blockquote class="source-quote">“Chẳng những giai cấp lao động và nhân dân Việt Nam ta có thể tự hào, mà giai cấp lao động và những dân tộc bị áp bức nơi khác cũng có thể tự hào rằng: Lần này là lần đầu tiên trong lịch sử cách mạng của các dân tộc thuộc địa và nửa thuộc địa, một Đảng mới 15 tuổi đã lãnh đạo cách mạng thành công, đã nắm chính quyền toàn quốc.”</blockquote>
+            <div class="source-take"><strong>Trọng tâm khai thác câu Đúng/Sai:</strong> Khẳng định 2 ý lớn: (1) Năng lực lãnh đạo tài tình của Đảng Cộng sản Đông Dương (1930–1945: 15 tuổi); (2) Tầm vóc và sức cổ vũ quốc tế to lớn đối với các dân tộc thuộc địa.</div>
+          </div>
+        
+    
+
+  <!-- SECTION B: ĐỀ 01 -->
+  
+      <div class="page-break"></div>
+      <div class="exam-header">
+        <div class="exam-top-row">
+          <div class="exam-left">
+            <div class="exam-school">ÔN TẬP KIỂM TRA THƯỜNG XUYÊN 15 PHÚT</div>
+            <div class="exam-subj">MÔN: LỊCH SỬ 12 — SÁCH KẾT NỐI TRI THỨC</div>
+            <div class="exam-lesson">Nội dung: Bài 6 — Cách mạng tháng Tám năm 1945</div>
+          </div>
+          <div class="exam-right">
+            <div class="exam-code">ĐỀ SỐ 01</div>
+            <div class="exam-time">Thời gian làm bài: 15 phút</div>
+            <div class="exam-note">(Không kể thời gian phát đề)</div>
+          </div>
+        </div>
+        <div class="student-bar">
+          <span>Họ và tên: .................................................................</span>
+          <span>Lớp: 12.......</span>
+          <span>Điểm: ............. / 10</span>
+        </div>
+      </div>
+
+      <div class="part-hdr">
+        PHẦN I. TRẮC NGHIỆM NHIỀU PHƯƠNG ÁN LỰA CHỌN <span>(6,0 điểm — 12 câu × 0,5 điểm/câu)</span>
+      </div>
+      <div class="part-guide">Thí sinh trả lời từ câu 1 đến câu 12. Mỗi câu hỏi thí sinh chỉ chọn một phương án đúng nhất.</div>
+      
+          <div class="q-block">
+            <div class="q-stem"><strong>Câu 1.</strong> Sự kiện nào sau đây đã tạo ra thời cơ khách quan thuận lợi nhất cho nhân dân Việt Nam đứng lên Tổng khởi nghĩa tháng Tám năm 1945?</div>
+            <div class="opt-grid-1"><div class="opt-item"><span class="opt-lbl">A.</span> <span>Phát xít Đức đầu hàng Đồng minh không điều kiện (5/1945).</span></div><div class="opt-item"><span class="opt-lbl">B.</span> <span>Nhật Bản tuyên bố đầu hàng Đồng minh không điều kiện (15/8/1945).</span></div><div class="opt-item"><span class="opt-lbl">C.</span> <span>Quân phiệt Nhật đảo chính lật đổ thực dân Pháp ở Đông Dương (9/3/1945).</span></div><div class="opt-item"><span class="opt-lbl">D.</span> <span>Liên Xô và Mỹ thỏa thuận chấm dứt Chiến tranh lạnh.</span></div></div>
+          </div>
+        
+          <div class="q-block">
+            <div class="q-stem"><strong>Câu 2.</strong> Ngay sau khi Nhật Bản tuyên bố đầu hàng Đồng minh (15/8/1945), tình hình kẻ thù của cách mạng ở Đông Dương như thế nào?</div>
+            <div class="opt-grid-1"><div class="opt-item"><span class="opt-lbl">A.</span> <span>Quân Nhật vẫn giữ nguyên sức mạnh và mở cuộc càn quét lớn vào Việt Bắc.</span></div><div class="opt-item"><span class="opt-lbl">B.</span> <span>Thực dân Pháp lập tức khôi phục lại hoàn toàn bộ máy cai trị trên cả nước.</span></div><div class="opt-item"><span class="opt-lbl">C.</span> <span>Quân Đồng minh đã kịp thời tiến vào giải giáp toàn bộ quân Nhật ở Hà Nội.</span></div><div class="opt-item"><span class="opt-lbl">D.</span> <span>Quân Nhật ở Đông Dương rệu rã, chính phủ thân Nhật Trần Trọng Kim hoang mang, tê liệt.</span></div></div>
+          </div>
+        
+          <div class="q-block">
+            <div class="q-stem"><strong>Câu 3.</strong> Trong khoảng thời gian từ tháng 3 đến giữa tháng 8 năm 1945, phong trào đấu tranh nào ở Việt Nam đã trực tiếp chuẩn bị lực lượng và tập dượt cho Tổng khởi nghĩa tháng Tám?</div>
+            <div class="opt-grid-1"><div class="opt-item"><span class="opt-lbl">A.</span> <span>Cao trào kháng Nhật cứu nước.</span></div><div class="opt-item"><span class="opt-lbl">B.</span> <span>Phong trào dân chủ 1936 – 1939.</span></div><div class="opt-item"><span class="opt-lbl">C.</span> <span>Phong trào Xô viết Nghệ - Tĩnh.</span></div><div class="opt-item"><span class="opt-lbl">D.</span> <span>Phong trào &quot;Phá kho thóc giải quyết nạn đói&quot; sau ngày 2/9/1945.</span></div></div>
+          </div>
+        
+          <div class="q-block">
+            <div class="q-stem"><strong>Câu 4.</strong> Ngày 13 tháng 8 năm 1945, ngay khi nhận được những thông tin về việc Nhật Bản sắp đầu hàng Đồng minh, Trung ương Đảng và Tổng bộ Việt Minh đã thành lập cơ quan nào và ban bố văn kiện gì?</div>
+            <div class="opt-grid-1"><div class="opt-item"><span class="opt-lbl">A.</span> <span>Ủy ban Dân tộc giải phóng Việt Nam và ban bố Tuyên ngôn Độc lập.</span></div><div class="opt-item"><span class="opt-lbl">B.</span> <span>Chính phủ lâm thời và ban bố 10 chính sách lớn của Việt Minh.</span></div><div class="opt-item"><span class="opt-lbl">C.</span> <span>Ủy ban Khởi nghĩa toàn quốc và ban bố Quân lệnh số 1.</span></div><div class="opt-item"><span class="opt-lbl">D.</span> <span>Hội nghị toàn quốc của Đảng và ban bố Chỉ thị Nhật - Pháp bắn nhau.</span></div></div>
+          </div>
+        
+          <div class="q-block">
+            <div class="q-stem"><strong>Câu 5.</strong> Hội nghị toàn quốc của Đảng Cộng sản Đông Dương họp tại Tân Trào (Tuyên Quang) từ ngày 14 đến ngày 15 tháng 8 năm 1945 đã thông qua quyết định trọng đại nào?</div>
+            <div class="opt-grid-1"><div class="opt-item"><span class="opt-lbl">A.</span> <span>Phát động Tổng khởi nghĩa giành chính quyền trong cả nước trước khi quân Đồng minh vào.</span></div><div class="opt-item"><span class="opt-lbl">B.</span> <span>Thành lập Mặt trận Việt Nam Độc lập Đồng minh (Việt Minh).</span></div><div class="opt-item"><span class="opt-lbl">C.</span> <span>Phát động cuộc kháng chiến toàn quốc chống thực dân Pháp xâm lược.</span></div><div class="opt-item"><span class="opt-lbl">D.</span> <span>Thành lập Đội Việt Nam Tuyên truyền Giải phóng quân.</span></div></div>
+          </div>
+        
+          <div class="q-block">
+            <div class="q-stem"><strong>Câu 6.</strong> Trong Cách mạng tháng Tám năm 1945, nhân dân 4 tỉnh nào sau đây đã giành được chính quyền ở tỉnh lị sớm nhất cả nước (ngày 18/8/1945)?</div>
+            <div class="opt-grid-2"><div class="opt-item"><span class="opt-lbl">A.</span> <span>Bắc Ninh, Nam Định, Nghệ An, Quảng Ngãi.</span></div><div class="opt-item"><span class="opt-lbl">B.</span> <span>Cao Bằng, Bắc Kạn, Lạng Sơn, Thái Nguyên.</span></div><div class="opt-item"><span class="opt-lbl">C.</span> <span>Hà Nội, Hải Phòng, Huế, Sài Gòn.</span></div><div class="opt-item"><span class="opt-lbl">D.</span> <span>Bắc Giang, Hải Dương, Hà Tĩnh, Quảng Nam.</span></div></div>
+          </div>
+        
+          <div class="q-block">
+            <div class="q-stem"><strong>Câu 7.</strong> Thứ tự thời gian giành chính quyền thắng lợi tại 3 đô thị lớn nhất cả nước trong Cách mạng tháng Tám năm 1945 là</div>
+            <div class="opt-grid-2"><div class="opt-item"><span class="opt-lbl">A.</span> <span>Hà Nội (19/8) → Sài Gòn (23/8) → Huế (25/8).</span></div><div class="opt-item"><span class="opt-lbl">B.</span> <span>Huế (19/8) → Hà Nội (23/8) → Sài Gòn (25/8).</span></div><div class="opt-item"><span class="opt-lbl">C.</span> <span>Hà Nội (19/8) → Huế (23/8) → Sài Gòn (25/8).</span></div><div class="opt-item"><span class="opt-lbl">D.</span> <span>Sài Gòn (19/8) → Huế (23/8) → Hà Nội (25/8).</span></div></div>
+          </div>
+        
+          <div class="q-block">
+            <div class="q-stem"><strong>Câu 8.</strong> Đến ngày 28 tháng 8 năm 1945, hai địa phương nào sau đây giành được chính quyền cuối cùng trên đất liền, đánh dấu Tổng khởi nghĩa thắng lợi trên phạm vi cả nước?</div>
+            <div class="opt-grid-2"><div class="opt-item"><span class="opt-lbl">A.</span> <span>Cà Mau và Rạch Giá.</span></div><div class="opt-item"><span class="opt-lbl">B.</span> <span>Đồng Nai Thượng và Hà Tiên.</span></div><div class="opt-item"><span class="opt-lbl">C.</span> <span>Hà Giang và Lai Châu.</span></div><div class="opt-item"><span class="opt-lbl">D.</span> <span>Quảng Trị và Bình Thuận.</span></div></div>
+          </div>
+        
+          <div class="q-block">
+            <div class="q-stem"><strong>Câu 9.</strong> Ngày 2 tháng 9 năm 1945, tại Quảng trường Ba Đình (Hà Nội), Chủ tịch Hồ Chí Minh thay mặt Chính phủ lâm thời đọc bản Tuyên ngôn Độc lập, trịnh trọng tuyên bố sự ra đời của</div>
+            <div class="opt-grid-1"><div class="opt-item"><span class="opt-lbl">A.</span> <span>nước Cộng hòa Xã hội Chủ nghĩa Việt Nam.</span></div><div class="opt-item"><span class="opt-lbl">B.</span> <span>Chính phủ Cách mạng lâm thời Cộng hòa miền Nam Việt Nam.</span></div><div class="opt-item"><span class="opt-lbl">C.</span> <span>Liên bang Đông Dương dân chủ.</span></div><div class="opt-item"><span class="opt-lbl">D.</span> <span>nước Việt Nam Dân chủ Cộng hòa.</span></div></div>
+          </div>
+        
+          <div class="q-block">
+            <div class="q-stem"><strong>Câu 10.</strong> Nhân tố giữ vai trò quyết định hàng đầu đưa đến thắng lợi của Cách mạng tháng Tám năm 1945 là</div>
+            <div class="opt-grid-1"><div class="opt-item"><span class="opt-lbl">A.</span> <span>sự lãnh đạo đúng đắn, sáng suốt của Đảng Cộng sản Đông Dương, đứng đầu là Chủ tịch Hồ Chí Minh.</span></div><div class="opt-item"><span class="opt-lbl">B.</span> <span>chiến thắng của Hồng quân Liên Xô và các lực lượng Đồng minh chống phát xít.</span></div><div class="opt-item"><span class="opt-lbl">C.</span> <span>mâu thuẫn nội bộ sâu sắc giữa phát xít Nhật và thực dân Pháp ở Đông Dương.</span></div><div class="opt-item"><span class="opt-lbl">D.</span> <span>sự ủng hộ về tài chính và vũ khí của các nước xã hội chủ nghĩa Đông Âu.</span></div></div>
+          </div>
+        
+          <div class="q-block">
+            <div class="q-stem"><strong>Câu 11.</strong> Thắng lợi của Cách mạng tháng Tám năm 1945 đã lật đổ ách thống trị của những thế lực nào trên đất nước Việt Nam?</div>
+            <div class="opt-grid-1"><div class="opt-item"><span class="opt-lbl">A.</span> <span>Thực dân Pháp (hơn 50 năm), đế quốc Mỹ (gần 20 năm) và chế độ quân chủ.</span></div><div class="opt-item"><span class="opt-lbl">B.</span> <span>Thực dân Pháp (hơn 80 năm), quân phiệt Nhật (gần 5 năm) và chế độ quân chủ (hơn 1000 năm).</span></div><div class="opt-item"><span class="opt-lbl">C.</span> <span>Chỉ lật đổ quân phiệt Nhật Bản, vẫn duy trì thể chế quân chủ lập hiến của triều Nguyễn.</span></div><div class="opt-item"><span class="opt-lbl">D.</span> <span>Chủ nghĩa thực dân mới của Mỹ và chính quyền Sài Gòn.</span></div></div>
+          </div>
+        
+          <div class="q-block">
+            <div class="q-stem"><strong>Câu 12.</strong> Trong Cách mạng tháng Tám năm 1945, bài học về xây dựng và phát huy sức mạnh khối đại đoàn kết toàn dân tộc gắn liền trực tiếp với vai trò của tổ chức nào?</div>
+            <div class="opt-grid-2"><div class="opt-item"><span class="opt-lbl">A.</span> <span>Hội Việt Nam Cách mạng Thanh niên.</span></div><div class="opt-item"><span class="opt-lbl">B.</span> <span>Mặt trận Dân chủ Đông Dương.</span></div><div class="opt-item"><span class="opt-lbl">C.</span> <span>Mặt trận Việt Minh (Việt Nam Độc lập Đồng minh).</span></div><div class="opt-item"><span class="opt-lbl">D.</span> <span>Mặt trận Dân tộc giải phóng miền Nam Việt Nam.</span></div></div>
+          </div>
+        
+
+      <div class="part-hdr" style="margin-top:10px;">
+        PHẦN II. TRẮC NGHIỆM ĐÚNG / SAI <span>(4,0 điểm — 2 câu × 2,0 điểm/câu)</span>
+      </div>
+      <div class="part-guide">Trong mỗi ý a), b), c), d) ở mỗi câu, thí sinh chọn Đúng (Đ) hoặc Sai (S). Thang điểm chuẩn Bộ GD&amp;ĐT: đúng 1 ý được 0,2đ; đúng 2 ý được 0,5đ; đúng 3 ý được 1,0đ; đúng cả 4 ý được 2,0đ.</div>
+      
+          <div class="tf-block">
+            <div class="q-stem"><strong>Câu 1.</strong> Đọc đoạn tư liệu sau đây và xác định tính Đúng/Sai của các nhận định bên dưới:</div>
+            <div class="tf-passage">
+              <div>“Đến ngày 15 - 8 - 1945, Nhật Bản tuyên bố đầu hàng Đồng minh không điều kiện. Ngay sau khi Nhật Bản tuyên bố đầu hàng Đồng minh, quân Nhật ở Đông Dương rệu rã, Chính phủ thân Nhật Trần Trọng Kim hoang mang. Điều kiện khách quan thuận lợi cho cuộc Tổng khởi nghĩa đã đến... Trước đó, từ tháng 3 đến tháng 8/1945, cao trào kháng Nhật, cứu nước đã diễn ra trong cả nước, góp phần chuẩn bị lực lượng, tập dượt cho quần chúng đấu tranh, sẵn sàng tổng khởi nghĩa giành chính quyền khi thời cơ đến.”</div>
+              <div class="tf-src">(Sách giáo khoa Lịch sử 12, bộ Kết nối tri thức với cuộc sống, Bài 6)</div>
+            </div>
+            <table class="tf-table">
+              <tbody>
+            <tr>
+              <td class="tf-key"><strong>a)</strong></td>
+              <td class="tf-text">Sự kiện Nhật Bản đầu hàng Đồng minh không điều kiện (15/8/1945) đã tạo ra điều kiện khách quan thuận lợi cho cuộc Tổng khởi nghĩa ở Việt Nam.</td>
+              <td class="tf-box">☐ Đ &nbsp; ☐ S</td>
+            </tr>
+            
+            <tr>
+              <td class="tf-key"><strong>b)</strong></td>
+              <td class="tf-text">Ngay khi Nhật Bản tuyên bố đầu hàng, quân đội Nhật ở Đông Dương đã bị tiêu diệt hoàn toàn và tự động trao trả chính quyền cho Việt Minh.</td>
+              <td class="tf-box">☐ Đ &nbsp; ☐ S</td>
+            </tr>
+            
+            <tr>
+              <td class="tf-key"><strong>c)</strong></td>
+              <td class="tf-text">Cao trào kháng Nhật cứu nước (từ tháng 3 đến tháng 8/1945) đóng vai trò chuẩn bị lực lượng và tập dượt trực tiếp cho thắng lợi của Tổng khởi nghĩa.</td>
+              <td class="tf-box">☐ Đ &nbsp; ☐ S</td>
+            </tr>
+            
+            <tr>
+              <td class="tf-key"><strong>d)</strong></td>
+              <td class="tf-text">Thời cơ &quot;ngàn năm có một&quot; của Cách mạng tháng Tám xuất hiện từ khi Nhật đảo chính Pháp (9/3/1945) và kéo dài liên tục đến hết năm 1945.</td>
+              <td class="tf-box">☐ Đ &nbsp; ☐ S</td>
+            </tr>
+            </tbody>
+            </table>
+          </div>
+        
+          <div class="tf-block">
+            <div class="q-stem"><strong>Câu 2.</strong> Đọc đoạn tư liệu sau đây và xác định tính Đúng/Sai của các nhận định bên dưới:</div>
+            <div class="tf-passage">
+              <div>“Cách mạng tháng Tám năm 1945 là sự kiện lịch sử vĩ đại, đã lật đổ ách cai trị của thực dân Pháp trong hơn 80 năm, của quân phiệt Nhật Bản gần 5 năm; chấm dứt thời kì quân chủ hơn 1000 năm; lập nên nước Việt Nam Dân chủ Cộng hòa... Đảng Cộng sản Đông Dương từ một đảng bí mật trở thành đảng cầm quyền, nhân dân Việt Nam từ thân phận nô lệ trở thành người làm chủ đất nước. Cách mạng tháng Tám đã đánh dấu một bước tiến nhảy vọt trong lịch sử dân tộc: mở ra kỉ nguyên độc lập, tự do và phát triển dưới chế độ dân chủ cộng hòa.”</div>
+              <div class="tf-src">(Sách giáo khoa Lịch sử 12, bộ Kết nối tri thức với cuộc sống, Bài 6)</div>
+            </div>
+            <table class="tf-table">
+              <tbody>
+            <tr>
+              <td class="tf-key"><strong>a)</strong></td>
+              <td class="tf-text">Cách mạng tháng Tám năm 1945 đã chấm dứt đồng thời ách thống trị của chủ nghĩa thực dân, quân phiệt phát xít và chế độ quân chủ ở Việt Nam.</td>
+              <td class="tf-box">☐ Đ &nbsp; ☐ S</td>
+            </tr>
+            
+            <tr>
+              <td class="tf-key"><strong>b)</strong></td>
+              <td class="tf-text">Thắng lợi của Cách mạng tháng Tám đã đưa Đảng Cộng sản Đông Dương từ một đảng hoạt động bí mật trở thành đảng cầm quyền.</td>
+              <td class="tf-box">☐ Đ &nbsp; ☐ S</td>
+            </tr>
+            
+            <tr>
+              <td class="tf-key"><strong>c)</strong></td>
+              <td class="tf-text">Cách mạng tháng Tám đã xóa bỏ hoàn toàn mọi tàn dư của chế độ phong kiến và đưa cả nước Việt Nam bước ngay vào thời kì quá độ lên chủ nghĩa xã hội.</td>
+              <td class="tf-box">☐ Đ &nbsp; ☐ S</td>
+            </tr>
+            
+            <tr>
+              <td class="tf-key"><strong>d)</strong></td>
+              <td class="tf-text">Nước Việt Nam Dân chủ Cộng hòa ra đời là nhà nước dân chủ nhân dân đầu tiên ở khu vực Đông Nam Á.</td>
+              <td class="tf-box">☐ Đ &nbsp; ☐ S</td>
+            </tr>
+            </tbody>
+            </table>
+          </div>
+        
+      <div class="exam-end">— HẾT ĐỀ SỐ 01 —</div>
+    
+
+  <!-- SECTION C: ĐỀ 02 -->
+  
+      <div class="page-break"></div>
+      <div class="exam-header">
+        <div class="exam-top-row">
+          <div class="exam-left">
+            <div class="exam-school">ÔN TẬP KIỂM TRA THƯỜNG XUYÊN 15 PHÚT</div>
+            <div class="exam-subj">MÔN: LỊCH SỬ 12 — SÁCH KẾT NỐI TRI THỨC</div>
+            <div class="exam-lesson">Nội dung: Bài 6 — Cách mạng tháng Tám năm 1945</div>
+          </div>
+          <div class="exam-right">
+            <div class="exam-code">ĐỀ SỐ 02</div>
+            <div class="exam-time">Thời gian làm bài: 15 phút</div>
+            <div class="exam-note">(Không kể thời gian phát đề)</div>
+          </div>
+        </div>
+        <div class="student-bar">
+          <span>Họ và tên: .................................................................</span>
+          <span>Lớp: 12.......</span>
+          <span>Điểm: ............. / 10</span>
+        </div>
+      </div>
+
+      <div class="part-hdr">
+        PHẦN I. TRẮC NGHIỆM NHIỀU PHƯƠNG ÁN LỰA CHỌN <span>(6,0 điểm — 12 câu × 0,5 điểm/câu)</span>
+      </div>
+      <div class="part-guide">Thí sinh trả lời từ câu 1 đến câu 12. Mỗi câu hỏi thí sinh chỉ chọn một phương án đúng nhất.</div>
+      
+          <div class="q-block">
+            <div class="q-stem"><strong>Câu 1.</strong> Thời cơ &quot;ngàn năm có một&quot; của Cách mạng tháng Tám năm 1945 chỉ tồn tại trong khoảng thời gian nào sau đây?</div>
+            <div class="opt-grid-1"><div class="opt-item"><span class="opt-lbl">A.</span> <span>Từ khi Nhật đảo chính Pháp (9/3/1945) đến khi Nhật đầu hàng Đồng minh (15/8/1945).</span></div><div class="opt-item"><span class="opt-lbl">B.</span> <span>Từ khi Chiến tranh thế giới thứ hai bùng nổ (9/1939) đến khi kết thúc (8/1945).</span></div><div class="opt-item"><span class="opt-lbl">C.</span> <span>Từ khi phát xít Đức đầu hàng (5/1945) đến khi Cách mạng tháng Tám thành công.</span></div><div class="opt-item"><span class="opt-lbl">D.</span> <span>Từ khi Nhật đầu hàng Đồng minh (15/8/1945) đến trước khi quân Đồng minh vào Đông Dương.</span></div></div>
+          </div>
+        
+          <div class="q-block">
+            <div class="q-stem"><strong>Câu 2.</strong> Cơ quan nào được bầu ra tại Đại hội Quốc dân Tân Trào (16 – 17/8/1945) và đóng vai trò tiền thân của Chính phủ lâm thời nước Việt Nam Dân chủ Cộng hòa?</div>
+            <div class="opt-grid-2"><div class="opt-item"><span class="opt-lbl">A.</span> <span>Ủy ban Dân tộc giải phóng Việt Nam.</span></div><div class="opt-item"><span class="opt-lbl">B.</span> <span>Ủy ban Khởi nghĩa toàn quốc.</span></div><div class="opt-item"><span class="opt-lbl">C.</span> <span>Tổng bộ Việt Minh.</span></div><div class="opt-item"><span class="opt-lbl">D.</span> <span>Ủy ban Quân sự cách mạng Bắc Kỳ.</span></div></div>
+          </div>
+        
+          <div class="q-block">
+            <div class="q-stem"><strong>Câu 3.</strong> Vì sao khi Nhật đảo chính Pháp (9/3/1945), Đảng Cộng sản Đông Dương chưa phát động Tổng khởi nghĩa mà chỉ phát động cao trào kháng Nhật cứu nước và khởi nghĩa từng phần?</div>
+            <div class="opt-grid-1"><div class="opt-item"><span class="opt-lbl">A.</span> <span>Vì thực dân Pháp vẫn còn nắm giữ phần lớn quân đội mạnh ở Bắc Bộ.</span></div><div class="opt-item"><span class="opt-lbl">B.</span> <span>Vì Mặt trận Việt Minh chưa được thành lập nên chưa tập hợp được lực lượng quần chúng.</span></div><div class="opt-item"><span class="opt-lbl">C.</span> <span>Vì quân phiệt Nhật còn mạnh, lực lượng trung gian chưa ngả hẳn về phía cách mạng, điều kiện Tổng khởi nghĩa chưa chín muồi.</span></div><div class="opt-item"><span class="opt-lbl">D.</span> <span>Vì Hồng quân Liên Xô yêu cầu Việt Nam chờ quân Đồng minh vào mới được khởi nghĩa.</span></div></div>
+          </div>
+        
+          <div class="q-block">
+            <div class="q-stem"><strong>Câu 4.</strong> Sự kiện nào sau đây ngày 30 tháng 8 năm 1945 đánh dấu chế độ quân chủ (phong kiến) kéo dài hơn 1000 năm ở Việt Nam hoàn toàn sụp đổ?</div>
+            <div class="opt-grid-1"><div class="opt-item"><span class="opt-lbl">A.</span> <span>Quần chúng nhân dân giành chính quyền thắng lợi tại kinh đô Huế.</span></div><div class="opt-item"><span class="opt-lbl">B.</span> <span>Vua Bảo Đại đọc chiếu thoái vị và trao ấn kiếm cho đại diện Chính phủ lâm thời.</span></div><div class="opt-item"><span class="opt-lbl">C.</span> <span>Chủ tịch Hồ Chí Minh đọc bản Tuyên ngôn Độc lập tại Quảng trường Ba Đình.</span></div><div class="opt-item"><span class="opt-lbl">D.</span> <span>Ủy ban Dân tộc giải phóng Việt Nam cải tổ thành Chính phủ lâm thời.</span></div></div>
+          </div>
+        
+          <div class="q-block">
+            <div class="q-stem"><strong>Câu 5.</strong> Vì sao ngay từ ngày 14 tháng 8 năm 1945, nhiều cấp bộ Đảng và tổ chức Việt Minh ở các địa phương dù chưa nhận được Quân lệnh số 1 nhưng vẫn chủ động phát động nhân dân khởi nghĩa giành chính quyền thắng lợi?</div>
+            <div class="opt-grid-1"><div class="opt-item"><span class="opt-lbl">A.</span> <span>Do đã thấm nhuần tinh thần Chỉ thị &quot;Nhật - Pháp bắn nhau và hành động của chúng ta&quot; (12/3/1945) và chủ động nắm bắt thời cơ thực tiễn.</span></div><div class="opt-item"><span class="opt-lbl">B.</span> <span>Do quân đội Nhật đã tự động bàn giao toàn bộ vũ khí cho các địa phương.</span></div><div class="opt-item"><span class="opt-lbl">C.</span> <span>Do nhận được sự chi viện trực tiếp bằng không quân của lực lượng Đồng minh.</span></div><div class="opt-item"><span class="opt-lbl">D.</span> <span>Do chính phủ Trần Trọng Kim ra lệnh giải tán chính quyền ở toàn bộ cấp xã, huyện.</span></div></div>
+          </div>
+        
+          <div class="q-block">
+            <div class="q-stem"><strong>Câu 6.</strong> Nhận định nào sau đây phản ánh ĐÚNG vai trò của các lực lượng trong cuộc Tổng khởi nghĩa tháng Tám năm 1945?</div>
+            <div class="opt-grid-1"><div class="opt-item"><span class="opt-lbl">A.</span> <span>Lực lượng vũ trang giữ vai trò quyết định, lực lượng chính trị chỉ hỗ trợ phía sau.</span></div><div class="opt-item"><span class="opt-lbl">B.</span> <span>Chỉ sử dụng lực lượng chính trị hoàn toàn, không có sự tham gia của lực lượng vũ trang.</span></div><div class="opt-item"><span class="opt-lbl">C.</span> <span>Quân đội Đồng minh giữ vai trò quyết định giải phóng các thành phố lớn.</span></div><div class="opt-item"><span class="opt-lbl">D.</span> <span>Lực lượng chính trị của quần chúng giữ vai trò quyết định, lực lượng vũ trang giữ vai trò nòng cốt, xung kích.</span></div></div>
+          </div>
+        
+          <div class="q-block">
+            <div class="q-stem"><strong>Câu 7.</strong> Trong Cách mạng tháng Tám năm 1945, nhân dân Việt Nam đã giành chính quyền trực tiếp từ tay kẻ thù nào?</div>
+            <div class="opt-grid-1"><div class="opt-item"><span class="opt-lbl">A.</span> <span>Thực dân Pháp và chính quyền tay sai thân Pháp.</span></div><div class="opt-item"><span class="opt-lbl">B.</span> <span>Phát xít Nhật và chính quyền tay sai thân Nhật.</span></div><div class="opt-item"><span class="opt-lbl">C.</span> <span>Quân đội Trung Hoa Dân quốc và quân đội Anh.</span></div><div class="opt-item"><span class="opt-lbl">D.</span> <span>Liên quân thực dân Pháp – Nhật đang cùng cai trị Đông Dương.</span></div></div>
+          </div>
+        
+          <div class="q-block">
+            <div class="q-stem"><strong>Câu 8.</strong> Nhân tố khách quan (chiến thắng của Hồng quân Liên Xô và quân Đồng minh chống phát xít) có vai trò như thế nào đối với thắng lợi của Cách mạng tháng Tám năm 1945?</div>
+            <div class="opt-grid-1"><div class="opt-item"><span class="opt-lbl">A.</span> <span>Giữ vai trò quyết định trực tiếp, thay thế cho quá trình chuẩn bị lực lượng trong nước.</span></div><div class="opt-item"><span class="opt-lbl">B.</span> <span>Trực tiếp giải phóng các đô thị lớn Hà Nội, Huế, Sài Gòn giúp nhân dân Việt Nam.</span></div><div class="opt-item"><span class="opt-lbl">C.</span> <span>Tạo ra điều kiện và thời cơ thuận lợi để nhân dân Việt Nam đứng lên giành chính quyền.</span></div><div class="opt-item"><span class="opt-lbl">D.</span> <span>Không có bất kỳ tác động nào đến diễn biến Cách mạng tháng Tám năm 1945.</span></div></div>
+          </div>
+        
+          <div class="q-block">
+            <div class="q-stem"><strong>Câu 9.</strong> Nhận định nào sau đây KHÔNG ĐÚNG về ý nghĩa lịch sử của Cách mạng tháng Tám năm 1945?</div>
+            <div class="opt-grid-1"><div class="opt-item"><span class="opt-lbl">A.</span> <span>Chấm dứt vĩnh viễn chế độ quân chủ kéo dài hơn 1000 năm ở Việt Nam.</span></div><div class="opt-item"><span class="opt-lbl">B.</span> <span>Đưa nhân dân Việt Nam từ thân phận nô lệ trở thành người làm chủ đất nước.</span></div><div class="opt-item"><span class="opt-lbl">C.</span> <span>Đã xóa bỏ hoàn toàn mọi tàn dư phong kiến và giải quyết triệt để vấn đề ruộng đất cho nông dân.</span></div><div class="opt-item"><span class="opt-lbl">D.</span> <span>Góp phần cổ vũ mạnh mẽ tinh thần đấu tranh của các dân tộc thuộc địa và phụ thuộc trên thế giới.</span></div></div>
+          </div>
+        
+          <div class="q-block">
+            <div class="q-stem"><strong>Câu 10.</strong> Một số học giả nước ngoài cho rằng thắng lợi của Cách mạng tháng Tám năm 1945 là do sự &quot;ăn may&quot; khi Việt Minh lợi dụng &quot;khoảng trống quyền lực&quot; sau khi Nhật đầu hàng. Luận điểm nào sau đây bác bỏ thuyết phục nhất quan điểm sai trái đó?</div>
+            <div class="opt-grid-1"><div class="opt-item"><span class="opt-lbl">A.</span> <span>Mọi quốc gia ở Đông Nam Á năm 1945 đều giành được độc lập dễ dàng như nhau.</span></div><div class="opt-item"><span class="opt-lbl">B.</span> <span>Thắng lợi đó là kết quả của quá trình chuẩn bị chu đáo suốt 15 năm (1930–1945) của Đảng và sự chủ động, kịp thời chớp thời cơ của toàn dân tộc.</span></div><div class="opt-item"><span class="opt-lbl">C.</span> <span>Quân đội Nhật Bản ở Việt Nam đã tự nguyện rút toàn bộ binh lính về nước trước ngày 15/8/1945.</span></div><div class="opt-item"><span class="opt-lbl">D.</span> <span>Nhân dân Việt Nam nhận được sự đổ bộ giải phóng trực tiếp từ quân đội Mỹ và Anh.</span></div></div>
+          </div>
+        
+          <div class="q-block">
+            <div class="q-stem"><strong>Câu 11.</strong> Tính chất điển hình, nổi bật nhất của Cách mạng tháng Tám năm 1945 ở Việt Nam là</div>
+            <div class="opt-grid-1"><div class="opt-item"><span class="opt-lbl">A.</span> <span>một cuộc cách mạng tư sản dân quyền kiểu cũ.</span></div><div class="opt-item"><span class="opt-lbl">B.</span> <span>một cuộc cách mạng xã hội chủ nghĩa hoàn chỉnh.</span></div><div class="opt-item"><span class="opt-lbl">C.</span> <span>một cuộc cải cách dân chủ ôn hòa trong khuôn khổ chế độ thuộc địa.</span></div><div class="opt-item"><span class="opt-lbl">D.</span> <span>một cuộc cách mạng giải phóng dân tộc mang tính chất dân chủ mới.</span></div></div>
+          </div>
+        
+          <div class="q-block">
+            <div class="q-stem"><strong>Câu 12.</strong> Nhận định nào sau đây là SAI khi tổng kết những đặc điểm nổi bật của Cách mạng tháng Tám năm 1945?</div>
+            <div class="opt-grid-1"><div class="opt-item"><span class="opt-lbl">A.</span> <span>Lực lượng vũ trang nhân dân đóng vai trò quyết định trực tiếp, còn lực lượng chính trị chỉ hỗ trợ.</span></div><div class="opt-item"><span class="opt-lbl">B.</span> <span>Kết hợp chặt chẽ giữa đấu tranh chính trị của quần chúng với đấu tranh vũ trang.</span></div><div class="opt-item"><span class="opt-lbl">C.</span> <span>Diễn ra nhanh chóng (15 ngày), gọn gàng và ít đổ máu.</span></div><div class="opt-item"><span class="opt-lbl">D.</span> <span>Có sự kết hợp hài hòa giữa điều kiện khách quan thuận lợi và sự chuẩn bị chu đáo về nhân tố chủ quan.</span></div></div>
+          </div>
+        
+
+      <div class="part-hdr" style="margin-top:10px;">
+        PHẦN II. TRẮC NGHIỆM ĐÚNG / SAI <span>(4,0 điểm — 2 câu × 2,0 điểm/câu)</span>
+      </div>
+      <div class="part-guide">Trong mỗi ý a), b), c), d) ở mỗi câu, thí sinh chọn Đúng (Đ) hoặc Sai (S). Thang điểm chuẩn Bộ GD&amp;ĐT: đúng 1 ý được 0,2đ; đúng 2 ý được 0,5đ; đúng 3 ý được 1,0đ; đúng cả 4 ý được 2,0đ.</div>
+      
+          <div class="tf-block">
+            <div class="q-stem"><strong>Câu 1.</strong> Đọc đoạn tư liệu sau đây và xác định tính Đúng/Sai của các nhận định bên dưới:</div>
+            <div class="tf-passage">
+              <div>“Ngày 13 - 8 - 1945, ngay khi nhận được những thông tin về việc Nhật Bản sắp đầu hàng Đồng minh, Trung ương Đảng và Tổng bộ Việt Minh lập tức thành lập Ủy ban Khởi nghĩa toàn quốc, ban bố Quân lệnh số 1, chính thức phát lệnh Tổng khởi nghĩa trong cả nước. Từ ngày 14 đến ngày 15 - 8 - 1945, Hội nghị toàn quốc của Đảng họp ở Tân Trào (Tuyên Quang) thông qua kế hoạch lãnh đạo toàn dân Tổng khởi nghĩa... Từ ngày 16 đến ngày 17 - 8 - 1945, Đại hội Quốc dân được triệu tập ở Tân Trào, tán thành chủ trương Tổng khởi nghĩa của Đảng, thông qua 10 chính sách của Việt Minh, cử ra Ủy ban Dân tộc giải phóng Việt Nam do Hồ Chí Minh làm Chủ tịch.”</div>
+              <div class="tf-src">(Tổng hợp theo SGK Lịch sử 12, bộ Kết nối tri thức với cuộc sống, Bài 6)</div>
+            </div>
+            <table class="tf-table">
+              <tbody>
+            <tr>
+              <td class="tf-key"><strong>a)</strong></td>
+              <td class="tf-text">Ủy ban Khởi nghĩa toàn quốc đã ban bố Quân lệnh số 1 vào ngày 13/8/1945, chính thức phát lệnh Tổng khởi nghĩa trên phạm vi cả nước.</td>
+              <td class="tf-box">☐ Đ &nbsp; ☐ S</td>
+            </tr>
+            
+            <tr>
+              <td class="tf-key"><strong>b)</strong></td>
+              <td class="tf-text">Hội nghị toàn quốc của Đảng (14 – 15/8/1945) đã bầu ra Ủy ban Dân tộc giải phóng Việt Nam do Hồ Chí Minh làm Chủ tịch.</td>
+              <td class="tf-box">☐ Đ &nbsp; ☐ S</td>
+            </tr>
+            
+            <tr>
+              <td class="tf-key"><strong>c)</strong></td>
+              <td class="tf-text">Việc Đảng phát lệnh Tổng khởi nghĩa trước cả khi Nhật hoàng chính thức tuyên bố đầu hàng (15/8) thể hiện sự nhạy bén, quyết đoán và chủ động nắm bắt thời cơ.</td>
+              <td class="tf-box">☐ Đ &nbsp; ☐ S</td>
+            </tr>
+            
+            <tr>
+              <td class="tf-key"><strong>d)</strong></td>
+              <td class="tf-text">Đại hội Quốc dân Tân Trào thể hiện tinh thần đoàn kết và sự đồng lòng của toàn thể dân tộc Việt Nam trước giờ Tổng khởi nghĩa.</td>
+              <td class="tf-box">☐ Đ &nbsp; ☐ S</td>
+            </tr>
+            </tbody>
+            </table>
+          </div>
+        
+          <div class="tf-block">
+            <div class="q-stem"><strong>Câu 2.</strong> Đọc đoạn tư liệu sau đây và xác định tính Đúng/Sai của các nhận định bên dưới:</div>
+            <div class="tf-passage">
+              <div>“Chẳng những giai cấp lao động và nhân dân Việt Nam ta có thể tự hào, mà giai cấp lao động và những dân tộc bị áp bức nơi khác cũng có thể tự hào rằng: Lần này là lần đầu tiên trong lịch sử cách mạng của các dân tộc thuộc địa và nửa thuộc địa, một Đảng mới 15 tuổi đã lãnh đạo cách mạng thành công, đã nắm chính quyền toàn quốc.”</div>
+              <div class="tf-src">(Hồ Chí Minh Toàn tập, Tập 7 — trích trong SGK Lịch sử 12, bộ Kết nối tri thức với cuộc sống)</div>
+            </div>
+            <table class="tf-table">
+              <tbody>
+            <tr>
+              <td class="tf-key"><strong>a)</strong></td>
+              <td class="tf-text">Đoạn tư liệu khẳng định vai trò lãnh đạo đúng đắn, tài tình của Đảng Cộng sản Đông Dương là nhân tố quyết định hàng đầu đưa Cách mạng tháng Tám tới thắng lợi.</td>
+              <td class="tf-box">☐ Đ &nbsp; ☐ S</td>
+            </tr>
+            
+            <tr>
+              <td class="tf-key"><strong>b)</strong></td>
+              <td class="tf-text">Thắng lợi của Cách mạng tháng Tám không chỉ có ý nghĩa với dân tộc Việt Nam mà còn cổ vũ mạnh mẽ phong trào giải phóng dân tộc trên thế giới.</td>
+              <td class="tf-box">☐ Đ &nbsp; ☐ S</td>
+            </tr>
+            
+            <tr>
+              <td class="tf-key"><strong>c)</strong></td>
+              <td class="tf-text">Chiến thắng của Hồng quân Liên Xô và lực lượng Đồng minh là nguyên nhân quyết định nhất, thay thế cho vai trò lãnh đạo của Đảng trong Cách mạng tháng Tám.</td>
+              <td class="tf-box">☐ Đ &nbsp; ☐ S</td>
+            </tr>
+            
+            <tr>
+              <td class="tf-key"><strong>d)</strong></td>
+              <td class="tf-text">Con số &quot;15 tuổi&quot; trong đoạn tư liệu phản ánh quá trình chuẩn bị lực lượng bền bỉ của Đảng Cộng sản Đông Dương từ năm 1930 đến năm 1945.</td>
+              <td class="tf-box">☐ Đ &nbsp; ☐ S</td>
+            </tr>
+            </tbody>
+            </table>
+          </div>
+        
+      <div class="exam-end">— HẾT ĐỀ SỐ 02 —</div>
+    
+
+  <!-- SECTION D: SOLUTIONS -->
+  <div class="page-break"></div>
+  
+      <div class="sol-exam-block">
+        <div class="section-banner green-banner">
+          <span>✓</span> ĐÁP ÁN &amp; GIẢI THÍCH CHI TIẾT — ĐỀ 01 • CƠ BẢN &amp; TRỌNG TÂM SGK
+        </div>
+        <div class="key-card">
+          <div class="key-label">BẢNG TRA ĐÁP ÁN NHANH ĐỀ SỐ 01</div>
+          <table class="key-table">
+            <thead><tr><th>Phần I</th><th>C1</th><th>C2</th><th>C3</th><th>C4</th><th>C5</th><th>C6</th><th>C7</th><th>C8</th><th>C9</th><th>C10</th><th>C11</th><th>C12</th></tr></thead>
+            <tbody><tr><td><strong>Đáp án</strong></td><td><strong>B</strong></td><td><strong>D</strong></td><td><strong>A</strong></td><td><strong>C</strong></td><td><strong>A</strong></td><td><strong>D</strong></td><td><strong>C</strong></td><td><strong>B</strong></td><td><strong>D</strong></td><td><strong>A</strong></td><td><strong>B</strong></td><td><strong>C</strong></td></tr></tbody>
+          </table>
+          <div class="key-tf-row"><span><strong>Câu 1 (Đ/S):</strong> a) <strong>Đ</strong> &nbsp;•&nbsp; b) <strong>S</strong> &nbsp;•&nbsp; c) <strong>Đ</strong> &nbsp;•&nbsp; d) <strong>S</strong></span> &nbsp;&nbsp;|&nbsp;&nbsp; <span><strong>Câu 2 (Đ/S):</strong> a) <strong>Đ</strong> &nbsp;•&nbsp; b) <strong>Đ</strong> &nbsp;•&nbsp; c) <strong>S</strong> &nbsp;•&nbsp; d) <strong>Đ</strong></span></div>
+        </div>
+        <div class="sol-subhdr">I. Giải thích chi tiết 12 câu Trắc nghiệm nhiều phương án lựa chọn</div>
+        
+          <div class="sol-item">
+            <div class="sol-head">
+              <span class="sol-qnum">Câu 1</span>
+              <span class="sol-ans">Chọn B</span>
+              
+              <span class="sol-opt-preview">Nhật Bản tuyên bố đầu hàng Đồng minh không điều kiện (15/8/1945).</span>
+            </div>
+            <div class="sol-body">Ngày 15/8/1945, Nhật Bản tuyên bố đầu hàng Đồng minh không điều kiện khiến quân Nhật ở Đông Dương rệu rã, chính phủ thân Nhật Trần Trọng Kim hoang mang. Đây là thời cơ khách quan thuận lợi nhất cho cuộc Tổng khởi nghĩa.</div>
+            <div class="sol-tip"><strong>Mẹo nhớ nhanh:</strong> Nhớ mốc 15/8/1945: Nhật đầu hàng vô điều kiện = thời cơ Tổng khởi nghĩa mở ra!</div>
+          </div>
+        
+          <div class="sol-item">
+            <div class="sol-head">
+              <span class="sol-qnum">Câu 2</span>
+              <span class="sol-ans">Chọn D</span>
+              
+              <span class="sol-opt-preview">Quân Nhật ở Đông Dương rệu rã, chính phủ thân Nhật Trần Trọng Kim hoang mang, tê liệt.</span>
+            </div>
+            <div class="sol-body">Khi Nhật Hoàng tuyên bố đầu hàng Đồng minh (15/8/1945), quân đội Nhật ở Đông Dương rệu rã, mất tinh thần chiến đấu, còn chính phủ thân Nhật Trần Trọng Kim hoang mang, dao động cực độ.</div>
+            <div class="sol-tip"><strong>Mẹo nhớ nhanh:</strong> Từ khóa chuẩn SGK: quân Nhật &#x27;rệu rã&#x27;, chính phủ Trần Trọng Kim &#x27;hoang mang&#x27;.</div>
+          </div>
+        
+          <div class="sol-item">
+            <div class="sol-head">
+              <span class="sol-qnum">Câu 3</span>
+              <span class="sol-ans">Chọn A</span>
+              
+              <span class="sol-opt-preview">Cao trào kháng Nhật cứu nước.</span>
+            </div>
+            <div class="sol-body">Sau khi Nhật đảo chính Pháp (9/3/1945) và Ban Thường vụ Trung ương Đảng ra Chỉ thị &quot;Nhật - Pháp bắn nhau và hành động của chúng ta&quot; (12/3/1945), Cao trào kháng Nhật cứu nước diễn ra sôi nổi từ tháng 3 đến giữa tháng 8/1945, là cuộc tập dượt trực tiếp cho Tổng khởi nghĩa.</div>
+            <div class="sol-tip"><strong>Mẹo nhớ nhanh:</strong> Tháng 3 → 8/1945 = Cao trào kháng Nhật cứu nước (khởi nghĩa từng phần).</div>
+          </div>
+        
+          <div class="sol-item">
+            <div class="sol-head">
+              <span class="sol-qnum">Câu 4</span>
+              <span class="sol-ans">Chọn C</span>
+              <span class="pill red" style="margin-left:5px;">CÂU BẪY</span>
+              <span class="sol-opt-preview">Ủy ban Khởi nghĩa toàn quốc và ban bố Quân lệnh số 1.</span>
+            </div>
+            <div class="sol-body">Đêm 13/8/1945, Trung ương Đảng và Tổng bộ Việt Minh thành lập Ủy ban Khởi nghĩa toàn quốc; đến 23 giờ cùng ngày, Ủy ban Khởi nghĩa toàn quốc ban bố Quân lệnh số 1, chính thức phát lệnh Tổng khởi nghĩa trong cả nước.</div>
+            <div class="sol-tip"><strong>Mẹo nhớ nhanh:</strong> BẪY HAY NHẦM: 13/8 = Ủy ban Khởi nghĩa toàn quốc + Quân lệnh số 1 (KHÔNG phải Ủy ban Dân tộc giải phóng!).</div>
+          </div>
+        
+          <div class="sol-item">
+            <div class="sol-head">
+              <span class="sol-qnum">Câu 5</span>
+              <span class="sol-ans">Chọn A</span>
+              
+              <span class="sol-opt-preview">Phát động Tổng khởi nghĩa giành chính quyền trong cả nước trước khi quân Đồng minh vào.</span>
+            </div>
+            <div class="sol-body">Hội nghị toàn quốc của Đảng (14–15/8/1945) tại Tân Trào đã thông qua kế hoạch lãnh đạo toàn dân Tổng khởi nghĩa giành chính quyền trước khi quân Đồng minh vào Đông Dương và quyết định những vấn đề quan trọng về đối nội, đối ngoại sau khi giành chính quyền.</div>
+            <div class="sol-tip"><strong>Mẹo nhớ nhanh:</strong> 14–15/8 = Hội nghị toàn quốc của Đảng (kế hoạch Tổng khởi nghĩa + đối nội, đối ngoại).</div>
+          </div>
+        
+          <div class="sol-item">
+            <div class="sol-head">
+              <span class="sol-qnum">Câu 6</span>
+              <span class="sol-ans">Chọn D</span>
+              <span class="pill red" style="margin-left:5px;">CÂU BẪY</span>
+              <span class="sol-opt-preview">Bắc Giang, Hải Dương, Hà Tĩnh, Quảng Nam.</span>
+            </div>
+            <div class="sol-body">Ngày 18/8/1945, nhân dân 4 tỉnh Bắc Giang, Hải Dương, Hà Tĩnh và Quảng Nam đã giành được chính quyền ở tỉnh lị sớm nhất trong cả nước.</div>
+            <div class="sol-tip"><strong>Mẹo nhớ nhanh:</strong> Mẹo nhớ 4 tỉnh sớm nhất (18/8): BẮC - HẢI - HÀ - QUẢNG (Bắc Giang, Hải Dương, Hà Tĩnh, Quảng Nam)!</div>
+          </div>
+        
+          <div class="sol-item">
+            <div class="sol-head">
+              <span class="sol-qnum">Câu 7</span>
+              <span class="sol-ans">Chọn C</span>
+              
+              <span class="sol-opt-preview">Hà Nội (19/8) → Huế (23/8) → Sài Gòn (25/8).</span>
+            </div>
+            <div class="sol-body">Khởi nghĩa thắng lợi lần lượt theo chiều Bắc → Trung → Nam tại 3 trung tâm lớn: Hà Nội (19/8/1945), Huế (23/8/1945) và Sài Gòn (25/8/1945).</div>
+            <div class="sol-tip"><strong>Mẹo nhớ nhanh:</strong> Nhớ đúng trục Bắc → Trung → Nam: Hà Nội (19) → Huế (23) → Sài Gòn (25).</div>
+          </div>
+        
+          <div class="sol-item">
+            <div class="sol-head">
+              <span class="sol-qnum">Câu 8</span>
+              <span class="sol-ans">Chọn B</span>
+              
+              <span class="sol-opt-preview">Đồng Nai Thượng và Hà Tiên.</span>
+            </div>
+            <div class="sol-body">Ngày 28/8/1945, Đồng Nai Thượng và Hà Tiên là hai tỉnh cuối cùng trên đất liền giành được chính quyền, khép lại 15 ngày Tổng khởi nghĩa (14–28/8/1945) thắng lợi trên phạm vi cả nước.</div>
+            <div class="sol-tip"><strong>Mẹo nhớ nhanh:</strong> 4 tỉnh đầu (18/8): Bắc Giang, Hải Dương, Hà Tĩnh, Quảng Nam. 2 tỉnh cuối (28/8): Đồng Nai Thượng, Hà Tiên!</div>
+          </div>
+        
+          <div class="sol-item">
+            <div class="sol-head">
+              <span class="sol-qnum">Câu 9</span>
+              <span class="sol-ans">Chọn D</span>
+              
+              <span class="sol-opt-preview">nước Việt Nam Dân chủ Cộng hòa.</span>
+            </div>
+            <div class="sol-body">Ngày 2/9/1945, Chủ tịch Hồ Chí Minh đọc Tuyên ngôn Độc lập, khai sinh nước Việt Nam Dân chủ Cộng hòa — nhà nước dân chủ nhân dân đầu tiên ở Đông Nam Á.</div>
+            <div class="sol-tip"><strong>Mẹo nhớ nhanh:</strong> Quốc hiệu năm 1945 là Việt Nam Dân chủ Cộng hòa (đến năm 1976 mới đổi thành CHXHCN Việt Nam).</div>
+          </div>
+        
+          <div class="sol-item">
+            <div class="sol-head">
+              <span class="sol-qnum">Câu 10</span>
+              <span class="sol-ans">Chọn A</span>
+              <span class="pill red" style="margin-left:5px;">CÂU BẪY</span>
+              <span class="sol-opt-preview">sự lãnh đạo đúng đắn, sáng suốt của Đảng Cộng sản Đông Dương, đứng đầu là Chủ tịch Hồ Chí Minh.</span>
+            </div>
+            <div class="sol-body">Trong các nguyên nhân thắng lợi, nguyên nhân chủ quan giữ vai trò quyết định — mà đứng đầu là sự lãnh đạo đúng đắn, sáng suốt, tài tình của Đảng Cộng sản Đông Dương và Chủ tịch Hồ Chí Minh.</div>
+            <div class="sol-tip"><strong>Mẹo nhớ nhanh:</strong> Luôn nhớ: Nguyên nhân CHỦ QUAN quyết định (đứng đầu là sự lãnh đạo của Đảng); Liên Xô/Đồng minh là KHÁCH QUAN!</div>
+          </div>
+        
+          <div class="sol-item">
+            <div class="sol-head">
+              <span class="sol-qnum">Câu 11</span>
+              <span class="sol-ans">Chọn B</span>
+              
+              <span class="sol-opt-preview">Thực dân Pháp (hơn 80 năm), quân phiệt Nhật (gần 5 năm) và chế độ quân chủ (hơn 1000 năm).</span>
+            </div>
+            <div class="sol-body">Theo SGK Lịch sử 12 KNTT: Cách mạng tháng Tám đã lật đổ ách cai trị của thực dân Pháp trong hơn 80 năm (1858–1945), quân phiệt Nhật Bản gần 5 năm (9/1940–8/1945) và chấm dứt thời kì quân chủ hơn 1000 năm.</div>
+            <div class="sol-tip"><strong>Mẹo nhớ nhanh:</strong> Bộ 3 con số chuẩn SGK KNTT: Pháp (&gt;80 năm) • Nhật (gần 5 năm) • Quân chủ (&gt;1000 năm).</div>
+          </div>
+        
+          <div class="sol-item">
+            <div class="sol-head">
+              <span class="sol-qnum">Câu 12</span>
+              <span class="sol-ans">Chọn C</span>
+              
+              <span class="sol-opt-preview">Mặt trận Việt Minh (Việt Nam Độc lập Đồng minh).</span>
+            </div>
+            <div class="sol-body">Mặt trận Việt Minh (thành lập 19/5/1941) với các hội Cứu quốc phong phú đã tập hợp, tổ chức và đoàn kết mọi tầng lớp nhân dân yêu nước không phân biệt giai cấp, tôn giáo, dân tộc dưới lá cờ đỏ sao vàng.</div>
+            <div class="sol-tip"><strong>Mẹo nhớ nhanh:</strong> Cách mạng tháng Tám + khối đại đoàn kết = MẶT TRẬN VIỆT MINH!</div>
+          </div>
+        
+        <div class="sol-subhdr" style="margin-top:8px;">II. Giải thích chi tiết 2 câu Trắc nghiệm Đúng / Sai</div>
+        
+          <div class="tf-sol-box">
+            <div class="tf-sol-title">Phần II — Câu 1: Bối cảnh tháng 8/1945 &amp; Thời cơ &quot;ngàn năm có một&quot;</div>
+            
+              <div class="tf-sol-row">
+                <div class="tf-sol-top"><strong>Ý a)</strong> <span class="tf-badge ok">ĐÚNG</span> <span class="tf-sol-stmt">Sự kiện Nhật Bản đầu hàng Đồng minh không điều kiện (15/8/1945) đã tạo ra điều kiện khách quan thuận lợi cho cuộc Tổng khởi nghĩa ở Việt Nam.</span></div>
+                <div class="tf-sol-exp">ĐÚNG. Tư liệu nêu rõ: sau khi Nhật Bản đầu hàng Đồng minh (15/8/1945), quân Nhật ở Đông Dương rệu rã, chính phủ Trần Trọng Kim hoang mang — điều kiện khách quan thuận lợi cho Tổng khởi nghĩa đã đến.</div>
+              </div>
+            
+              <div class="tf-sol-row">
+                <div class="tf-sol-top"><strong>Ý b)</strong> <span class="tf-badge no">SAI</span> <span class="tf-sol-stmt">Ngay khi Nhật Bản tuyên bố đầu hàng, quân đội Nhật ở Đông Dương đã bị tiêu diệt hoàn toàn và tự động trao trả chính quyền cho Việt Minh.</span></div>
+                <div class="tf-sol-exp">SAI (BẪY!). Quân Nhật ở Đông Dương lúc đó &#x27;rệu rã, mất tinh thần&#x27; chứ chưa bị tiêu diệt hoàn toàn và cũng không tự động trao trả chính quyền; nhân dân ta vẫn phải kiên quyết chớp thời cơ vùng lên khởi nghĩa giành chính quyền.</div>
+              </div>
+            
+              <div class="tf-sol-row">
+                <div class="tf-sol-top"><strong>Ý c)</strong> <span class="tf-badge ok">ĐÚNG</span> <span class="tf-sol-stmt">Cao trào kháng Nhật cứu nước (từ tháng 3 đến tháng 8/1945) đóng vai trò chuẩn bị lực lượng và tập dượt trực tiếp cho thắng lợi của Tổng khởi nghĩa.</span></div>
+                <div class="tf-sol-exp">ĐÚNG. Trực tiếp từ đoạn tư liệu và kiến thức SGK: cao trào kháng Nhật cứu nước chuẩn bị lực lượng, tập dượt quần chúng sẵn sàng tổng khởi nghĩa khi thời cơ đến.</div>
+              </div>
+            
+              <div class="tf-sol-row">
+                <div class="tf-sol-top"><strong>Ý d)</strong> <span class="tf-badge no">SAI</span> <span class="tf-sol-stmt">Thời cơ &quot;ngàn năm có một&quot; của Cách mạng tháng Tám xuất hiện từ khi Nhật đảo chính Pháp (9/3/1945) và kéo dài liên tục đến hết năm 1945.</span></div>
+                <div class="tf-sol-exp">SAI (BẪY!). Thời cơ ngàn năm có một rất ngắn ngủi, chỉ tồn tại từ khi Nhật đầu hàng Đồng minh (15/8/1945) đến TRƯỚC KHI quân Đồng minh kéo vào Đông Dương giải giáp quân Nhật (đầu tháng 9/1945).</div>
+              </div>
+            
+          </div>
+        
+          <div class="tf-sol-box">
+            <div class="tf-sol-title">Phần II — Câu 2: Ý nghĩa lịch sử &amp; Bước ngoặt vĩ đại của dân tộc</div>
+            
+              <div class="tf-sol-row">
+                <div class="tf-sol-top"><strong>Ý a)</strong> <span class="tf-badge ok">ĐÚNG</span> <span class="tf-sol-stmt">Cách mạng tháng Tám năm 1945 đã chấm dứt đồng thời ách thống trị của chủ nghĩa thực dân, quân phiệt phát xít và chế độ quân chủ ở Việt Nam.</span></div>
+                <div class="tf-sol-exp">ĐÚNG. Tư liệu khẳng định rõ: lật đổ ách cai trị của thực dân Pháp (&gt;80 năm), quân phiệt Nhật (gần 5 năm) và chấm dứt thời kì quân chủ (&gt;1000 năm).</div>
+              </div>
+            
+              <div class="tf-sol-row">
+                <div class="tf-sol-top"><strong>Ý b)</strong> <span class="tf-badge ok">ĐÚNG</span> <span class="tf-sol-stmt">Thắng lợi của Cách mạng tháng Tám đã đưa Đảng Cộng sản Đông Dương từ một đảng hoạt động bí mật trở thành đảng cầm quyền.</span></div>
+                <div class="tf-sol-exp">ĐÚNG. Đây là chuyển biến lịch sử về địa vị chính trị của Đảng Cộng sản Đông Dương ngay sau khi Nhà nước Việt Nam Dân chủ Cộng hòa ra đời.</div>
+              </div>
+            
+              <div class="tf-sol-row">
+                <div class="tf-sol-top"><strong>Ý c)</strong> <span class="tf-badge no">SAI</span> <span class="tf-sol-stmt">Cách mạng tháng Tám đã xóa bỏ hoàn toàn mọi tàn dư của chế độ phong kiến và đưa cả nước Việt Nam bước ngay vào thời kì quá độ lên chủ nghĩa xã hội.</span></div>
+                <div class="tf-sol-exp">SAI (BẪY KÉP!). Cách mạng tháng Tám mới xóa bỏ chế độ quân chủ chứ chưa xóa bỏ hết tàn dư phong kiến (ruộng đất chưa giải quyết triệt để); và năm 1945 mở ra kỷ nguyên độc lập, tự do dưới chế độ dân chủ cộng hòa (đến sau năm 1975 cả nước mới cùng đi lên CNXH).</div>
+              </div>
+            
+              <div class="tf-sol-row">
+                <div class="tf-sol-top"><strong>Ý d)</strong> <span class="tf-badge ok">ĐÚNG</span> <span class="tf-sol-stmt">Nước Việt Nam Dân chủ Cộng hòa ra đời là nhà nước dân chủ nhân dân đầu tiên ở khu vực Đông Nam Á.</span></div>
+                <div class="tf-sol-exp">ĐÚNG. Sự ra đời của nước Việt Nam Dân chủ Cộng hòa (2/9/1945) đánh dấu nhà nước công nông / dân chủ nhân dân đầu tiên tại Đông Nam Á.</div>
+              </div>
+            
+          </div>
+        
+      </div>
+    
+  <div class="page-break"></div>
+  
+      <div class="sol-exam-block">
+        <div class="section-banner green-banner">
+          <span>✓</span> ĐÁP ÁN &amp; GIẢI THÍCH CHI TIẾT — ĐỀ 02 • THÔNG HIỂU &amp; CHỐNG BẪY 10/10
+        </div>
+        <div class="key-card">
+          <div class="key-label">BẢNG TRA ĐÁP ÁN NHANH ĐỀ SỐ 02</div>
+          <table class="key-table">
+            <thead><tr><th>Phần I</th><th>C1</th><th>C2</th><th>C3</th><th>C4</th><th>C5</th><th>C6</th><th>C7</th><th>C8</th><th>C9</th><th>C10</th><th>C11</th><th>C12</th></tr></thead>
+            <tbody><tr><td><strong>Đáp án</strong></td><td><strong>D</strong></td><td><strong>A</strong></td><td><strong>C</strong></td><td><strong>B</strong></td><td><strong>A</strong></td><td><strong>D</strong></td><td><strong>B</strong></td><td><strong>C</strong></td><td><strong>C</strong></td><td><strong>B</strong></td><td><strong>D</strong></td><td><strong>A</strong></td></tr></tbody>
+          </table>
+          <div class="key-tf-row"><span><strong>Câu 1 (Đ/S):</strong> a) <strong>Đ</strong> &nbsp;•&nbsp; b) <strong>S</strong> &nbsp;•&nbsp; c) <strong>Đ</strong> &nbsp;•&nbsp; d) <strong>Đ</strong></span> &nbsp;&nbsp;|&nbsp;&nbsp; <span><strong>Câu 2 (Đ/S):</strong> a) <strong>Đ</strong> &nbsp;•&nbsp; b) <strong>Đ</strong> &nbsp;•&nbsp; c) <strong>S</strong> &nbsp;•&nbsp; d) <strong>Đ</strong></span></div>
+        </div>
+        <div class="sol-subhdr">I. Giải thích chi tiết 12 câu Trắc nghiệm nhiều phương án lựa chọn</div>
+        
+          <div class="sol-item">
+            <div class="sol-head">
+              <span class="sol-qnum">Câu 1</span>
+              <span class="sol-ans">Chọn D</span>
+              <span class="pill red" style="margin-left:5px;">CÂU BẪY</span>
+              <span class="sol-opt-preview">Từ khi Nhật đầu hàng Đồng minh (15/8/1945) đến trước khi quân Đồng minh vào Đông Dương.</span>
+            </div>
+            <div class="sol-body">Thời cơ vàng xuất hiện cực kỳ ngắn ngủi: kẻ thù trực tiếp (Nhật) đã đầu hàng và rệu rã (15/8/1945), trong khi kẻ thù mới (quân Đồng minh: Anh, Trung Hoa Dân quốc, đằng sau là Pháp) chưa kịp kéo vào Đông Dương (đầu tháng 9/1945).</div>
+            <div class="sol-tip"><strong>Mẹo nhớ nhanh:</strong> BẪY KINH ĐIỂN: Thời cơ KHÔNG bắt đầu từ 9/3/1945 mà chỉ từ 15/8 đến TRƯỚC KHI quân Đồng minh vào!</div>
+          </div>
+        
+          <div class="sol-item">
+            <div class="sol-head">
+              <span class="sol-qnum">Câu 2</span>
+              <span class="sol-ans">Chọn A</span>
+              <span class="pill red" style="margin-left:5px;">CÂU BẪY</span>
+              <span class="sol-opt-preview">Ủy ban Dân tộc giải phóng Việt Nam.</span>
+            </div>
+            <div class="sol-body">Đại hội Quốc dân Tân Trào đã cử ra Ủy ban Dân tộc giải phóng Việt Nam do Hồ Chí Minh làm Chủ tịch. Đến ngày 28/8/1945, cơ quan này được cải tổ thành Chính phủ lâm thời nước Việt Nam Dân chủ Cộng hòa.</div>
+            <div class="sol-tip"><strong>Mẹo nhớ nhanh:</strong> Phân biệt 2 Ủy ban: 13/8 = Ủy ban Khởi nghĩa toàn quốc (phát lệnh); 16–17/8 = Ủy ban Dân tộc giải phóng VN (tiền thân Chính phủ).</div>
+          </div>
+        
+          <div class="sol-item">
+            <div class="sol-head">
+              <span class="sol-qnum">Câu 3</span>
+              <span class="sol-ans">Chọn C</span>
+              <span class="pill red" style="margin-left:5px;">CÂU BẪY</span>
+              <span class="sol-opt-preview">Vì quân phiệt Nhật còn mạnh, lực lượng trung gian chưa ngả hẳn về phía cách mạng, điều kiện Tổng khởi nghĩa chưa chín muồi.</span>
+            </div>
+            <div class="sol-body">Tháng 3/1945, Nhật vừa đảo chính lật đổ Pháp nên quân Nhật vẫn còn rất mạnh, chính quyền địch chưa tê liệt, lực lượng trung gian còn dao động. Vì thế điều kiện Tổng khởi nghĩa chưa chín muồi — Đảng chỉ phát động cao trào kháng Nhật và khởi nghĩa từng phần để chuẩn bị thời cơ.</div>
+            <div class="sol-tip"><strong>Mẹo nhớ nhanh:</strong> So sánh 9/3 vs 15/8: 9/3 Nhật còn MẠNH → khởi nghĩa từng phần; 15/8 Nhật ĐẦU HÀNG, RỆU RÃ → Tổng khởi nghĩa!</div>
+          </div>
+        
+          <div class="sol-item">
+            <div class="sol-head">
+              <span class="sol-qnum">Câu 4</span>
+              <span class="sol-ans">Chọn B</span>
+              <span class="pill red" style="margin-left:5px;">CÂU BẪY</span>
+              <span class="sol-opt-preview">Vua Bảo Đại đọc chiếu thoái vị và trao ấn kiếm cho đại diện Chính phủ lâm thời.</span>
+            </div>
+            <div class="sol-body">Chiều 30/8/1945, trước hàng vạn nhân dân tại Ngọ Môn (Huế), vua Bảo Đại đọc chiếu thoái vị và trao ấn kiếm cho phái đoàn Chính phủ lâm thời, chính thức chấm dứt vĩnh viễn chế độ quân chủ ở Việt Nam.</div>
+            <div class="sol-tip"><strong>Mẹo nhớ nhanh:</strong> BẪY MỐC NGÀY: Huế giành chính quyền = 23/8; Bảo Đại thoái vị (chế độ phong kiến sụp đổ) = 30/8!</div>
+          </div>
+        
+          <div class="sol-item">
+            <div class="sol-head">
+              <span class="sol-qnum">Câu 5</span>
+              <span class="sol-ans">Chọn A</span>
+              <span class="pill red" style="margin-left:5px;">CÂU BẪY</span>
+              <span class="sol-opt-preview">Do đã thấm nhuần tinh thần Chỉ thị &quot;Nhật - Pháp bắn nhau và hành động của chúng ta&quot; (12/3/1945) và chủ động nắm bắt thời cơ thực tiễn.</span>
+            </div>
+            <div class="sol-body">Chỉ thị 12/3/1945 đã dự kiến trước tình huống Nhật đầu hàng và nêu rõ phương châm chủ động nắm thời cơ. Nhờ vậy, khi nghe tin Nhật đầu hàng, từ 14/8 nhiều địa phương chưa kịp nhận Quân lệnh số 1 vẫn linh hoạt, chủ động lãnh đạo nhân dân khởi nghĩa thắng lợi.</div>
+            <div class="sol-tip"><strong>Mẹo nhớ nhanh:</strong> Từ khóa: thấm nhuần Chỉ thị 12/3/1945 + tính chủ động, sáng tạo của địa phương!</div>
+          </div>
+        
+          <div class="sol-item">
+            <div class="sol-head">
+              <span class="sol-qnum">Câu 6</span>
+              <span class="sol-ans">Chọn D</span>
+              <span class="pill red" style="margin-left:5px;">CÂU BẪY</span>
+              <span class="sol-opt-preview">Lực lượng chính trị của quần chúng giữ vai trò quyết định, lực lượng vũ trang giữ vai trò nòng cốt, xung kích.</span>
+            </div>
+            <div class="sol-body">Trong Cách mạng tháng Tám năm 1945, Đảng kết hợp chặt chẽ đấu tranh chính trị với đấu tranh vũ trang, trong đó lực lượng chính trị đông đảo của quần chúng giữ vai trò quyết định, còn lực lượng vũ trang đóng vai trò nòng cốt, xung kích hỗ trợ.</div>
+            <div class="sol-tip"><strong>Mẹo nhớ nhanh:</strong> BẪY CỰC HAY RA: Lực lượng CHÍNH TRỊ quyết định, lực lượng VŨ TRANG làm nòng cốt/xung kích!</div>
+          </div>
+        
+          <div class="sol-item">
+            <div class="sol-head">
+              <span class="sol-qnum">Câu 7</span>
+              <span class="sol-ans">Chọn B</span>
+              <span class="pill red" style="margin-left:5px;">CÂU BẪY</span>
+              <span class="sol-opt-preview">Phát xít Nhật và chính quyền tay sai thân Nhật.</span>
+            </div>
+            <div class="sol-body">Đêm 9/3/1945, phát xít Nhật đã đảo chính lật đổ thực dân Pháp để độc chiếm Đông Dương. Vì vậy, đến tháng 8/1945, nhân dân ta giành chính quyền trực tiếp từ tay phát xít Nhật và chính quyền tay sai thân Nhật (Chính phủ Trần Trọng Kim).</div>
+            <div class="sol-tip"><strong>Mẹo nhớ nhanh:</strong> BẪY SỐ 1: Pháp bị Nhật đảo chính từ 9/3/1945 rồi! Tháng 8/1945 ta giành chính quyền TRỰC TIẾP từ tay NHẬT!</div>
+          </div>
+        
+          <div class="sol-item">
+            <div class="sol-head">
+              <span class="sol-qnum">Câu 8</span>
+              <span class="sol-ans">Chọn C</span>
+              
+              <span class="sol-opt-preview">Tạo ra điều kiện và thời cơ thuận lợi để nhân dân Việt Nam đứng lên giành chính quyền.</span>
+            </div>
+            <div class="sol-body">Chiến thắng của Liên Xô và Đồng minh trước phát xít Nhật tạo ra thời cơ khách quan cực kỳ thuận lợi (làm kẻ thù trực tiếp rệu rã), nhưng muốn biến thời cơ thành thắng lợi thì nhân tố chủ quan (sự chuẩn bị 15 năm và lãnh đạo của Đảng) mới mang tính quyết định.</div>
+            <div class="sol-tip"><strong>Mẹo nhớ nhanh:</strong> Khách quan = tạo thời cơ thuận lợi; Chủ quan = quyết định biến thời cơ thành thắng lợi!</div>
+          </div>
+        
+          <div class="sol-item">
+            <div class="sol-head">
+              <span class="sol-qnum">Câu 9</span>
+              <span class="sol-ans">Chọn C</span>
+              <span class="pill red" style="margin-left:5px;">CÂU BẪY</span>
+              <span class="sol-opt-preview">Đã xóa bỏ hoàn toàn mọi tàn dư phong kiến và giải quyết triệt để vấn đề ruộng đất cho nông dân.</span>
+            </div>
+            <div class="sol-body">Cách mạng tháng Tám đã xóa bỏ chế độ QUÂN CHỦ (nhà nước phong kiến), nhưng CHƯA xóa bỏ hoàn toàn mọi tàn dư phong kiến và chưa giải quyết triệt để vấn đề ruộng đất (cải cách ruộng đất diễn ra trong giai đoạn sau).</div>
+            <div class="sol-tip"><strong>Mẹo nhớ nhanh:</strong> BẪY QUEN THUỘC: &#x27;chấm dứt chế độ quân chủ&#x27; = ĐÚNG; &#x27;xóa bỏ hoàn toàn tàn dư phong kiến / triệt để ruộng đất&#x27; = SAI!</div>
+          </div>
+        
+          <div class="sol-item">
+            <div class="sol-head">
+              <span class="sol-qnum">Câu 10</span>
+              <span class="sol-ans">Chọn B</span>
+              
+              <span class="sol-opt-preview">Thắng lợi đó là kết quả của quá trình chuẩn bị chu đáo suốt 15 năm (1930–1945) của Đảng và sự chủ động, kịp thời chớp thời cơ của toàn dân tộc.</span>
+            </div>
+            <div class="sol-body">Thời cơ khách quan xuất hiện chung ở nhiều nước Đông Nam Á khi Nhật đầu hàng, nhưng không phải nước nào cũng giành được chính quyền. Việt Nam thành công nhanh chóng chính nhờ sự chuẩn bị nội lực chu đáo trong 15 năm (đường lối, lực lượng, căn cứ địa, tập dượt) cùng bản lĩnh chủ động chớp thời cơ của Đảng.</div>
+            <div class="sol-tip"><strong>Mẹo nhớ nhanh:</strong> Bác bỏ luận điệu &#x27;ăn may / khoảng trống quyền lực&#x27; → nhấn mạnh 15 năm chuẩn bị nội lực + chủ động chớp thời cơ!</div>
+          </div>
+        
+          <div class="sol-item">
+            <div class="sol-head">
+              <span class="sol-qnum">Câu 11</span>
+              <span class="sol-ans">Chọn D</span>
+              <span class="pill red" style="margin-left:5px;">CÂU BẪY</span>
+              <span class="sol-opt-preview">một cuộc cách mạng giải phóng dân tộc mang tính chất dân chủ mới.</span>
+            </div>
+            <div class="sol-body">Cách mạng tháng Tám năm 1945 là cuộc cách mạng giải phóng dân tộc điển hình (nhiệm vụ trung tâm là đánh đổ đế quốc, phát xít giành độc lập cho dân tộc) đồng thời mang tính chất dân chủ mới (lập chính quyền của dân, xóa bỏ chế độ quân chủ, góp phần đánh bại phát xít).</div>
+            <div class="sol-tip"><strong>Mẹo nhớ nhanh:</strong> BẪY TÍNH CHẤT: Giải phóng dân tộc + Dân chủ mới (KHÔNG phải CM XHCN, KHÔNG phải tư sản kiểu cũ!).</div>
+          </div>
+        
+          <div class="sol-item">
+            <div class="sol-head">
+              <span class="sol-qnum">Câu 12</span>
+              <span class="sol-ans">Chọn A</span>
+              <span class="pill red" style="margin-left:5px;">CÂU BẪY</span>
+              <span class="sol-opt-preview">Lực lượng vũ trang nhân dân đóng vai trò quyết định trực tiếp, còn lực lượng chính trị chỉ hỗ trợ.</span>
+            </div>
+            <div class="sol-body">Nhận định &#x27;lực lượng vũ trang quyết định trực tiếp, lực lượng chính trị chỉ hỗ trợ&#x27; đã đảo ngược vai trò hai lực lượng! Thực tế trong Cách mạng tháng Tám năm 1945, LỰC LƯỢNG CHÍNH TRỊ của quần chúng mới đóng vai trò quyết định, còn lực lượng vũ trang giữ vai trò nòng cốt, xung kích.</div>
+            <div class="sol-tip"><strong>Mẹo nhớ nhanh:</strong> BẪY ĐẢO VAI TRÒ: Cứ thấy &#x27;vũ trang quyết định, chính trị hỗ trợ&#x27; là SAI ngay!</div>
+          </div>
+        
+        <div class="sol-subhdr" style="margin-top:8px;">II. Giải thích chi tiết 2 câu Trắc nghiệm Đúng / Sai</div>
+        
+          <div class="tf-sol-box">
+            <div class="tf-sol-title">Phần II — Câu 1: Chủ trương phát lệnh Tổng khởi nghĩa (13 – 18/8/1945)</div>
+            
+              <div class="tf-sol-row">
+                <div class="tf-sol-top"><strong>Ý a)</strong> <span class="tf-badge ok">ĐÚNG</span> <span class="tf-sol-stmt">Ủy ban Khởi nghĩa toàn quốc đã ban bố Quân lệnh số 1 vào ngày 13/8/1945, chính thức phát lệnh Tổng khởi nghĩa trên phạm vi cả nước.</span></div>
+                <div class="tf-sol-exp">ĐÚNG. Đêm 13/8/1945, Trung ương Đảng và Tổng bộ Việt Minh thành lập Ủy ban Khởi nghĩa toàn quốc và ban bố Quân lệnh số 1 (23 giờ cùng ngày).</div>
+              </div>
+            
+              <div class="tf-sol-row">
+                <div class="tf-sol-top"><strong>Ý b)</strong> <span class="tf-badge no">SAI</span> <span class="tf-sol-stmt">Hội nghị toàn quốc của Đảng (14 – 15/8/1945) đã bầu ra Ủy ban Dân tộc giải phóng Việt Nam do Hồ Chí Minh làm Chủ tịch.</span></div>
+                <div class="tf-sol-exp">SAI (BẪY ĐỔI SỰ KIỆN!). Ủy ban Dân tộc giải phóng Việt Nam do ĐẠI HỘI QUỐC DÂN TÂN TRÀO (16 – 17/8/1945) bầu ra, không phải Hội nghị toàn quốc của Đảng!</div>
+              </div>
+            
+              <div class="tf-sol-row">
+                <div class="tf-sol-top"><strong>Ý c)</strong> <span class="tf-badge ok">ĐÚNG</span> <span class="tf-sol-stmt">Việc Đảng phát lệnh Tổng khởi nghĩa trước cả khi Nhật hoàng chính thức tuyên bố đầu hàng (15/8) thể hiện sự nhạy bén, quyết đoán và chủ động nắm bắt thời cơ.</span></div>
+                <div class="tf-sol-exp">ĐÚNG. Khi vừa nắm chắc dấu hiệu Nhật sắp đầu hàng, Đảng lập tức ra Quân lệnh số 1 (13/8) để kịp thời huy động toàn dân giành chính quyền trước khi quân Đồng minh kéo vào.</div>
+              </div>
+            
+              <div class="tf-sol-row">
+                <div class="tf-sol-top"><strong>Ý d)</strong> <span class="tf-badge ok">ĐÚNG</span> <span class="tf-sol-stmt">Đại hội Quốc dân Tân Trào thể hiện tinh thần đoàn kết và sự đồng lòng của toàn thể dân tộc Việt Nam trước giờ Tổng khởi nghĩa.</span></div>
+                <div class="tf-sol-exp">ĐÚNG. Đại hội Quốc dân quy tụ đại biểu các đảng phái, đoàn thể, dân tộc, tôn giáo... nhất trí tán thành chủ trương Tổng khởi nghĩa và thông qua 10 chính sách của Việt Minh.</div>
+              </div>
+            
+          </div>
+        
+          <div class="tf-sol-box">
+            <div class="tf-sol-title">Phần II — Câu 2: Đánh giá của Chủ tịch Hồ Chí Minh &amp; Tầm vóc quốc tế</div>
+            
+              <div class="tf-sol-row">
+                <div class="tf-sol-top"><strong>Ý a)</strong> <span class="tf-badge ok">ĐÚNG</span> <span class="tf-sol-stmt">Đoạn tư liệu khẳng định vai trò lãnh đạo đúng đắn, tài tình của Đảng Cộng sản Đông Dương là nhân tố quyết định hàng đầu đưa Cách mạng tháng Tám tới thắng lợi.</span></div>
+                <div class="tf-sol-exp">ĐÚNG. Chủ tịch Hồ Chí Minh nhấn mạnh mốc son &#x27;một Đảng mới 15 tuổi đã lãnh đạo cách mạng thành công, đã nắm chính quyền toàn quốc&#x27; — khẳng định vai trò quyết định hàng đầu của Đảng.</div>
+              </div>
+            
+              <div class="tf-sol-row">
+                <div class="tf-sol-top"><strong>Ý b)</strong> <span class="tf-badge ok">ĐÚNG</span> <span class="tf-sol-stmt">Thắng lợi của Cách mạng tháng Tám không chỉ có ý nghĩa với dân tộc Việt Nam mà còn cổ vũ mạnh mẽ phong trào giải phóng dân tộc trên thế giới.</span></div>
+                <div class="tf-sol-exp">ĐÚNG. Tư liệu chỉ rõ &#x27;những dân tộc bị áp bức nơi khác cũng có thể tự hào&#x27; — thể hiện sức cổ vũ to lớn đối với phong trào giải phóng dân tộc thuộc địa và phụ thuộc.</div>
+              </div>
+            
+              <div class="tf-sol-row">
+                <div class="tf-sol-top"><strong>Ý c)</strong> <span class="tf-badge no">SAI</span> <span class="tf-sol-stmt">Chiến thắng của Hồng quân Liên Xô và lực lượng Đồng minh là nguyên nhân quyết định nhất, thay thế cho vai trò lãnh đạo của Đảng trong Cách mạng tháng Tám.</span></div>
+                <div class="tf-sol-exp">SAI (BẪY KINH ĐIỂN!). Chiến thắng của Liên Xô và Đồng minh là nguyên nhân KHÁCH QUAN tạo điều kiện thuận lợi, tuyệt đối không thể thay thế nguyên nhân chủ quan quyết định là sự lãnh đạo của Đảng và sức mạnh toàn dân.</div>
+              </div>
+            
+              <div class="tf-sol-row">
+                <div class="tf-sol-top"><strong>Ý d)</strong> <span class="tf-badge ok">ĐÚNG</span> <span class="tf-sol-stmt">Con số &quot;15 tuổi&quot; trong đoạn tư liệu phản ánh quá trình chuẩn bị lực lượng bền bỉ của Đảng Cộng sản Đông Dương từ năm 1930 đến năm 1945.</span></div>
+                <div class="tf-sol-exp">ĐÚNG. Đảng thành lập đầu năm 1930 đến tháng 8/1945 là tròn 15 năm chuẩn bị chu đáo qua ba phong trào cách mạng (1930–1931, 1936–1939, 1939–1945).</div>
+              </div>
+            
+          </div>
+        
+      </div>
+    
+
+  <!-- FINAL BONUS 1-PAGE CHEAT SHEET -->
+  
+      <div class="page-break"></div>
+      <div class="cheat-page">
+        <div class="cheat-banner">
+          <div class="cheat-kicker">TỜ GHI NHỚ SIÊU TỐC — ĐỌC LẠI 60 GIÂY TRƯỚC KHI PHÁT ĐỀ</div>
+          <div class="cheat-title">PHAO NHỚ NHANH BÀI 6: CÁCH MẠNG THÁNG TÁM NĂM 1945</div>
+          <div class="cheat-sub">Sách giáo khoa Lịch sử 12 — Bộ Kết nối tri thức với cuộc sống</div>
+        </div>
+
+        <div class="cheat-grid-2">
+          <div class="cheat-box red-top">
+            <div class="cheat-h">1. MỐC NGÀY SỐNG CÒN (ĐỌC THUỘC LÒNG)</div>
+            <ul class="cheat-list">
+              <li><strong>9/3 &amp; 12/3/1945:</strong> Nhật đảo chính Pháp → Chỉ thị <em>"Nhật - Pháp bắn nhau..."</em> → Cao trào kháng Nhật &amp; khởi nghĩa từng phần.</li>
+              <li><strong>6 &amp; 9/8/1945:</strong> Mỹ ném 2 bom nguyên tử; <strong>8–9/8:</strong> Liên Xô đánh tan đạo quân Quan Đông.</li>
+              <li><strong>13/8/1945 (23h):</strong> Lập <strong>Ủy ban Khởi nghĩa toàn quốc</strong> → Ban bố <strong>Quân lệnh số 1</strong>.</li>
+              <li><strong>14–15/8/1945:</strong> <strong>Hội nghị toàn quốc của Đảng</strong> (Tân Trào) → Kế hoạch Tổng KN + đối nội, đối ngoại.</li>
+              <li><strong>15/8/1945:</strong> Nhật hoàng đầu hàng Đồng minh vô điều kiện → <strong>Thời cơ vàng mở ra</strong>.</li>
+              <li><strong>16–17/8/1945:</strong> <strong>Đại hội Quốc dân Tân Trào</strong> → 10 chính sách Việt Minh + bầu <strong>UB DT Giải phóng VN</strong> (HCM Chủ tịch). Chiều 16/8: Võ Nguyên Giáp đánh thị xã Thái Nguyên.</li>
+              <li><strong>18/8/1945:</strong> <strong>4 tỉnh lị sớm nhất:</strong> Bắc Giang, Hải Dương, Hà Tĩnh, Quảng Nam + Thư kêu gọi của HCM.</li>
+              <li><strong>19/8 → 23/8 → 25/8:</strong> <strong>3 đô thị lớn:</strong> Hà Nội → Huế → Sài Gòn (ý nghĩa quyết định!).</li>
+              <li><strong>28/8/1945:</strong> <strong>2 tỉnh cuối cùng:</strong> Đồng Nai Thượng &amp; Hà Tiên → Xong cả nước trong <strong>15 ngày</strong> (14–28/8). Cải tổ thành Chính phủ lâm thời.</li>
+              <li><strong>30/8/1945:</strong> Vua Bảo Đại thoái vị tại Huế → <strong>Chấm dứt chế độ quân chủ</strong> (&gt;1000 năm).</li>
+              <li><strong>2/9/1945:</strong> Tuyên ngôn Độc lập (Ba Đình) → <strong>Khai sinh nước Việt Nam Dân chủ Cộng hòa</strong>.</li>
+            </ul>
+          </div>
+
+          <div class="cheat-col">
+            <div class="cheat-box amber-top">
+              <div class="cheat-h">2. CÁC BỘ TỪ KHÓA "ĂN ĐIỂM CHẮC 100%"</div>
+              <ul class="cheat-list">
+                <li><strong>Mẹo nhớ 4 tỉnh đầu (18/8):</strong> <strong>BẮC - HẢI - HÀ - QUẢNG</strong> (Bắc Giang, Hải Dương, Hà Tĩnh, Quảng Nam).</li>
+                <li><strong>Mẹo nhớ 2 tỉnh cuối (28/8):</strong> <strong>ĐỒNG NAI THƯỢNG &amp; HÀ TIÊN</strong>.</li>
+                <li><strong>Thời cơ ngàn năm có một:</strong> Từ <strong>15/8</strong> (Nhật đầu hàng) đến <strong>TRƯỚC KHI Đồng minh vào</strong> (đầu 9/1945).</li>
+                <li><strong>3 con số lật đổ:</strong> Pháp <strong>&gt;80 năm</strong> • Nhật <strong>gần 5 năm</strong> • Quân chủ <strong>&gt;1000 năm</strong>.</li>
+                <li><strong>Chuyển biến địa vị:</strong> Đảng (bí mật → <strong>cầm quyền</strong>); Nhân dân (nô lệ → <strong>làm chủ</strong>); Nhà nước dân chủ nhân dân <strong>đầu tiên ở Đông Nam Á</strong>.</li>
+                <li><strong>Kỷ nguyên mới:</strong> Độc lập, tự do và phát triển dưới chế độ dân chủ cộng hòa.</li>
+              </ul>
+            </div>
+
+            <div class="cheat-box green-top" style="margin-top:8px;">
+              <div class="cheat-h">3. NGUYÊN NHÂN • TÍNH CHẤT • 4 BÀI HỌC</div>
+              <ul class="cheat-list">
+                <li><strong>Nguyên nhân QUYẾT ĐỊNH nhất:</strong> Chủ quan — đứng đầu là <strong>sự lãnh đạo của Đảng</strong> (15 năm chuẩn bị 1930–1945 + truyền thống yêu nước, Mặt trận Việt Minh).</li>
+                <li><strong>Nguyên nhân KHÁCH QUAN:</strong> Chiến thắng của Liên Xô &amp; Đồng minh → <em>tạo điều kiện thuận lợi</em> (KHÔNG quyết định!).</li>
+                <li><strong>Tính chất:</strong> Cách mạng <strong>giải phóng dân tộc</strong> điển hình mang tính <strong>dân chủ mới</strong>.</li>
+                <li><strong>Phương thức:</strong> Khởi nghĩa từng phần → Tổng KN; kết hợp nông thôn &amp; thành thị; <strong>lực lượng chính trị quyết định</strong>, vũ trang làm nòng cốt; nhanh gọn (15 ngày), ít đổ máu.</li>
+                <li><strong>4 Bài học vàng:</strong> (1) Lãnh đạo của Đảng; (2) Đại đoàn kết dân tộc (Việt Minh); (3) Nắm bắt, chớp thời cơ; (4) Kết hợp sức mạnh dân tộc với thời đại (nội lực quyết định).</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="cheat-box navy-top" style="margin-top:8px;">
+          <div class="cheat-h">4. 6 BẪY PHẢI CẢNH GIÁC KHI ĐỌC ĐỀ (THẤY LÀ PHÁT HIỆN NGAY!)</div>
+          <div class="cheat-traps-grid">
+            <div><strong>①</strong> Giành chính quyền trực tiếp từ tay <strong>NHẬT &amp; tay sai</strong> (KHÔNG phải Pháp — Pháp bị đảo chính từ 9/3).</div>
+            <div><strong>②</strong> <strong>13/8</strong> lập UB Khởi nghĩa ra Quân lệnh số 1 ≠ <strong>16–17/8</strong> ĐH Quốc dân bầu UB Dân tộc giải phóng VN.</div>
+            <div><strong>③</strong> Chấm dứt chế độ phong kiến là <strong>30/8</strong> (Bảo Đại thoái vị), KHÔNG phải 19/8, 23/8 hay 2/9.</div>
+            <div><strong>④</strong> Mới chấm dứt chế độ <strong>quân chủ</strong>, <strong>CHƯA</strong> xóa bỏ hết tàn dư phong kiến / cách mạng ruộng đất triệt để.</div>
+            <div><strong>⑤</strong> <strong>Lực lượng CHÍNH TRỊ</strong> giữ vai trò quyết định, lực lượng vũ trang là nòng cốt (thấy đảo ngược → chọn SAI!).</div>
+            <div><strong>⑥</strong> Ngày 15/8 quân Nhật <strong>rệu rã, hoang mang</strong> chứ <strong>KHÔNG</strong> bị tiêu diệt hết ngay hay tự trao chính quyền.</div>
+          </div>
+        </div>
+      </div>
+    
+</body>
+</html>
